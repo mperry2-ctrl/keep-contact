@@ -34,7 +34,7 @@ export default function ContactForm() {
   const isEdit = Boolean(id)
 
   const [form, setForm] = useState<ContactPayload>({ name: '' })
-  const [phone, setPhone] = useState<PhoneValue>(undefined)
+  const [phone, setPhone] = useState<PhoneValue | undefined>(undefined)
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [tagsInput, setTagsInput] = useState('')
   const [loading, setLoading] = useState(isEdit)
@@ -127,7 +127,7 @@ export default function ContactForm() {
             <label style={label}>Phone (E.164)</label>
             <PhoneInput
               value={phone}
-              onChange={setPhone}
+              onChange={(val) => setPhone(val)}
               onBlur={validatePhone}
               defaultCountry="US"
               international
