@@ -1,0 +1,57 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  color-scheme: light;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #111;
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { margin: 0; }
+
+#root { min-height: 100vh; }
+
+h1, h2, h3 { margin: 0 0 0.5rem; font-weight: 600; color: #111; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1rem; }
+
+p { margin: 0; }
+
+a { color: #2563eb; }
+a:hover { color: #1d4ed8; }
+
+button {
+  cursor: pointer;
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+button:hover:not(:disabled) { background: #f9fafb; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+input[type="checkbox"], input[type="radio"] {
+  width: auto;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #111;
+  background: #fff;
+  width: 100%;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
