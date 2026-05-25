@@ -13,3 +13,5 @@ twilio>=9.0.0
 python-multipart>=0.0.20
 psycopg2-binary>=2.9.0
 greenlet>=3.0.0
+vobject>=0.9.6
+phonenumbers>=8.13.0
