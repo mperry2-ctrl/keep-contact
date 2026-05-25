@@ -133,6 +133,43 @@ class UserSettingsResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ImportContactPreview(BaseModel):
+    name: str
+    nickname: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    birthday: Optional[date] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country_code: Optional[str] = None
+    postal_code: Optional[str] = None
+    tags: Optional[list[str]] = None
+    general_notes: Optional[str] = None
+    duplicate_of: Optional[uuid.UUID] = None
+    duplicate_name: Optional[str] = None
+
+
+ImportAction = Literal["import", "skip", "merge"]
+
+
+class ImportConfirmItem(BaseModel):
+    contact: ImportContactPreview
+    action: ImportAction = "import"
+    merge_into: Optional[uuid.UUID] = None
+
+
+class ImportConfirmRequest(BaseModel):
+    contacts: list[ImportConfirmItem]
+
+
+class ImportConfirmResult(BaseModel):
+    imported: int
+    merged: int
+    skipped: int
+
+
 class InteractionCreate(BaseModel):
     date: date
     medium: InteractionMedium

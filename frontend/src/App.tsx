@@ -8,6 +8,7 @@ import Contacts from './pages/Contacts'
 import ContactDetail from './pages/ContactDetail'
 import ContactForm from './pages/ContactForm'
 import Settings from './pages/Settings'
+import ImportContacts from './pages/ImportContacts'
 
 function Nav() {
   const loc = useLocation()
@@ -20,6 +21,7 @@ function Nav() {
     <nav style={{ borderBottom: '1px solid #eee', padding: '0.75rem 2rem', display: 'flex', gap: '1.5rem' }}>
       <Link to="/" style={linkStyle('/')}>Home</Link>
       <Link to="/contacts" style={linkStyle('/contacts')}>Contacts</Link>
+      <Link to="/import" style={linkStyle('/import')}>Import</Link>
       <Link to="/settings" style={{ ...linkStyle('/settings'), marginLeft: 'auto' }}>Settings</Link>
     </nav>
   )
@@ -55,6 +57,7 @@ export default function App() {
         <Route path="/contacts/new" element={<ProtectedLayout session={session}><ContactForm /></ProtectedLayout>} />
         <Route path="/contacts/:id" element={<ProtectedLayout session={session}><ContactDetail /></ProtectedLayout>} />
         <Route path="/contacts/:id/edit" element={<ProtectedLayout session={session}><ContactForm /></ProtectedLayout>} />
+        <Route path="/import" element={<ProtectedLayout session={session}><ImportContacts /></ProtectedLayout>} />
         <Route path="/settings" element={<ProtectedLayout session={session}><Settings /></ProtectedLayout>} />
       </Routes>
     </BrowserRouter>
