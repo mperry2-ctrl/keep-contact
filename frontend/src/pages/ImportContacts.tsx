@@ -133,10 +133,6 @@ export default function ImportContacts() {
   // --- Derived counts ---
   const newCount = rows.filter(r => !r.contact.duplicate_of).length
   const dupCount = rows.filter(r => !!r.contact.duplicate_of).length
-  const actionCount = rows.filter(r => {
-    if (!r.selected) return false
-    return true
-  }).length
   const realActionCount = rows.filter(r => {
     if (!r.selected) return false
     if (r.contact.duplicate_of && r.dupAction === 'merge') return true
