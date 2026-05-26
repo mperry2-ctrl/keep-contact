@@ -1,22 +1,27 @@
 import uuid
 from datetime import date, datetime
 from typing import Optional, Literal
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 InteractionMedium = Literal["in-person", "call", "text", "email", "social", "other"]
+
+
+class LabeledValue(BaseModel):
+    value: str
+    label: str
 
 
 class ContactCreate(BaseModel):
     name: str
     nickname: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None  # stored in E.164 format e.g. +12125551234
+    phones: Optional[list[LabeledValue]] = None
+    emails: Optional[list[LabeledValue]] = None
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
-    country_code: Optional[str] = None   # ISO 3166-1 alpha-2 e.g. "US"
+    country_code: Optional[str] = None
     postal_code: Optional[str] = None
     tags: Optional[list[str]] = None
     general_notes: Optional[str] = None
@@ -26,8 +31,8 @@ class ContactCreate(BaseModel):
 class ContactUpdate(BaseModel):
     name: Optional[str] = None
     nickname: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
+    phones: Optional[list[LabeledValue]] = None
+    emails: Optional[list[LabeledValue]] = None
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
@@ -45,8 +50,8 @@ class ContactResponse(BaseModel):
     user_id: uuid.UUID
     name: str
     nickname: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    phones: Optional[list[LabeledValue]] = None
+    emails: Optional[list[LabeledValue]] = None
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
@@ -143,8 +148,8 @@ class UserProfileUpsert(BaseModel):
     state: Optional[str] = None
     country_code: Optional[str] = None
     postal_code: Optional[str] = None
-    phones: Optional[list[str]] = None
-    emails: Optional[list[str]] = None
+    phones: Optional[list[LabeledValue]] = None
+    emails: Optional[list[LabeledValue]] = None
     photo_url: Optional[str] = None
 
 
@@ -159,8 +164,8 @@ class UserProfileResponse(BaseModel):
     state: Optional[str] = None
     country_code: Optional[str] = None
     postal_code: Optional[str] = None
-    phones: Optional[list[str]] = None
-    emails: Optional[list[str]] = None
+    phones: Optional[list[LabeledValue]] = None
+    emails: Optional[list[LabeledValue]] = None
     photo_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
@@ -171,8 +176,8 @@ class UserProfileResponse(BaseModel):
 class ImportContactPreview(BaseModel):
     name: str
     nickname: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    phones: Optional[list[LabeledValue]] = None
+    emails: Optional[list[LabeledValue]] = None
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None

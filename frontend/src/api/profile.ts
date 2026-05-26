@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { LabeledEntry } from './contacts'
 
 export interface UserProfile {
   user_id: string
@@ -11,8 +12,8 @@ export interface UserProfile {
   state: string | null
   country_code: string | null
   postal_code: string | null
-  phones: string[] | null
-  emails: string[] | null
+  phones: LabeledEntry[] | null
+  emails: LabeledEntry[] | null
   photo_url: string | null
   created_at: string
   updated_at: string
@@ -28,8 +29,8 @@ export interface UserProfilePayload {
   state?: string | null
   country_code?: string | null
   postal_code?: string | null
-  phones?: string[] | null
-  emails?: string[] | null
+  phones?: LabeledEntry[] | null
+  emails?: LabeledEntry[] | null
   photo_url?: string | null
 }
 

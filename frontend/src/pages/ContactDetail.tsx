@@ -113,8 +113,12 @@ export default function ContactDetail() {
       </div>
 
       <section style={{ marginBottom: '1.5rem' }}>
-        <Row label="Email" value={contact.email} />
-        <Row label="Phone" value={contact.phone} />
+        {contact.phones?.filter(p => p.value).map((p, i) => (
+          <Row key={`p${i}`} label={`Phone (${p.label})`} value={p.value} />
+        ))}
+        {contact.emails?.filter(e => e.value).map((e, i) => (
+          <Row key={`e${i}`} label={`Email (${e.label})`} value={e.value} />
+        ))}
         <Row label="Birthday" value={contact.birthday} />
         <Row label="Job title" value={contact.job_title} />
         <Row label="Company" value={contact.company} />

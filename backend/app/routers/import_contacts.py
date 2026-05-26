@@ -119,24 +119,30 @@ def _parse_google_person(person: dict, groups: dict[str, str]) -> Optional[dict]
     nicks = person.get("nicknames", [])
     nickname = nicks[0].get("value") if nicks else None
 
-    # Phone — prefer mobile/cell
-    phones = person.get("phoneNumbers", [])
-    phone = None
-    if phones:
-        _prio = ["mobile", "cell", "main", "work", "home"]
-        def _rank(p: dict) -> int:
-            t = (p.get("canonicalForm") or p.get("type") or "").lower()
-            for i, pt in enumerate(_prio):
-                if pt in t:
-                    return i
-            return len(_prio)
-        best = sorted(phones, key=_rank)[0]
-        raw = best.get("value", "")
-        if raw:
-            phone = _normalize_phone(raw)
+    phone_entries = []
+    for p in person.get("phoneNumbers", []):
+        raw = p.get("value", "").strip()
+        if not raw:
+            continue
+        ptype = (p.get("canonicalForm") or p.get("type") or "").lower()
+        if any(x in ptype for x in ("mobile", "cell")):
+            label = "mobile"
+        elif "work" in ptype:
+            label = "work"
+        elif "home" in ptype:
+            label = "home"
+        else:
+            label = "other"
+        phone_entries.append({"value": _normalize_phone(raw), "label": label})
 
-    emails = person.get("emailAddresses", [])
-    email = emails[0].get("value") if emails else None
+    email_entries = []
+    for e in person.get("emailAddresses", []):
+        val = e.get("value", "").strip()
+        if not val:
+            continue
+        etype = (e.get("type") or "").lower()
+        label = "work" if "work" in etype else "personal"
+        email_entries.append({"value": val, "label": label})
 
     orgs = person.get("organizations", [])
     company = orgs[0].get("name") if orgs else None
@@ -165,17 +171,11 @@ def _parse_google_person(person: dict, groups: dict[str, str]) -> Optional[dict]
     tags: list[str] = []
     for membership in person.get("memberships", []):
         cgm = membership.get("contactGroupMembership", {})
-        label = groups.get(cgm.get("contactGroupResourceName", ""))
-        if label:
-            tags.append(label)
+        tag_label = groups.get(cgm.get("contactGroupResourceName", ""))
+        if tag_label:
+            tags.append(tag_label)
 
     extra: list[str] = []
-    if len(phones) > 1:
-        for p in phones[1:]:
-            extra.append(f"Phone ({p.get('type', 'other')}): {p.get('value', '')}")
-    if len(emails) > 1:
-        for e in emails[1:]:
-            extra.append(f"Email ({e.get('type', 'other')}): {e.get('value', '')}")
     for url in person.get("urls", []):
         extra.append(f"URL ({url.get('type', 'other')}): {url.get('value', '')}")
     for bio in person.get("biographies", []):
@@ -188,8 +188,8 @@ def _parse_google_person(person: dict, groups: dict[str, str]) -> Optional[dict]
     return {
         "name": name,
         "nickname": nickname,
-        "email": email,
-        "phone": phone or None,
+        "phones": phone_entries or None,
+        "emails": email_entries or None,
         "birthday": birthday,
         "job_title": job_title or None,
         "company": company or None,
@@ -218,16 +218,25 @@ def _parse_vcard(component) -> Optional[dict]:
 
     nickname = component.nickname.value.strip() if hasattr(component, "nickname") else None
 
-    phones = component.contents.get("tel", [])
-    phone = None
-    if phones:
-        cell = [p for p in phones if any(x in str(p.params).upper() for x in ("CELL", "MOBILE"))]
-        chosen = (cell or phones)[0]
-        raw = chosen.value if isinstance(chosen.value, str) else str(chosen.value)
-        phone = _normalize_phone(raw)
+    phone_entries = []
+    for p in component.contents.get("tel", []):
+        raw = p.value if isinstance(p.value, str) else str(p.value)
+        params_str = str(p.params).upper()
+        if any(x in params_str for x in ("CELL", "MOBILE")):
+            label = "mobile"
+        elif "WORK" in params_str:
+            label = "work"
+        elif "HOME" in params_str:
+            label = "home"
+        else:
+            label = "other"
+        phone_entries.append({"value": _normalize_phone(raw), "label": label})
 
-    emails = component.contents.get("email", [])
-    email = emails[0].value if emails else None
+    email_entries = []
+    for e in component.contents.get("email", []):
+        params_str = str(e.params).upper()
+        label = "work" if "WORK" in params_str else "personal"
+        email_entries.append({"value": e.value, "label": label})
 
     company = None
     job_title = None
@@ -279,13 +288,6 @@ def _parse_vcard(component) -> Optional[dict]:
         note_val = component.note.value.strip()
         if note_val:
             extra.append(note_val)
-    if len(phones) > 1:
-        for p in phones[1:]:
-            v = p.value if isinstance(p.value, str) else str(p.value)
-            extra.append(f"Phone: {v}")
-    if len(emails) > 1:
-        for e in emails[1:]:
-            extra.append(f"Email: {e.value}")
     for url in component.contents.get("url", []):
         extra.append(f"URL: {url.value}")
     if country_name_fallback:
@@ -300,8 +302,8 @@ def _parse_vcard(component) -> Optional[dict]:
     return {
         "name": name,
         "nickname": nickname,
-        "email": email,
-        "phone": phone or None,
+        "phones": phone_entries or None,
+        "emails": email_entries or None,
         "birthday": birthday,
         "job_title": job_title,
         "company": company,
@@ -325,24 +327,31 @@ async def _with_duplicates(
     phone_map: dict[str, Contact] = {}
     email_map: dict[str, Contact] = {}
     for c in existing:
-        if c.phone:
-            phone_map[c.phone] = c
-        if c.email:
-            email_map[c.email.lower()] = c
+        for p in (c.phones or []):
+            if isinstance(p, dict) and p.get("value"):
+                phone_map[p["value"]] = c
+        for e in (c.emails or []):
+            if isinstance(e, dict) and e.get("value"):
+                email_map[e["value"].lower()] = c
 
     previews = []
     for data in contacts:
         dup_id = None
         dup_name = None
-        phone = data.get("phone")
-        email = data.get("email")
-        if phone and phone in phone_map:
-            dup_id = phone_map[phone].id
-            dup_name = phone_map[phone].name
-        elif email and email.lower() in email_map:
-            match = email_map[email.lower()]
-            dup_id = match.id
-            dup_name = match.name
+        for p in (data.get("phones") or []):
+            pval = p.get("value") if isinstance(p, dict) else p
+            if pval and pval in phone_map:
+                dup_id = phone_map[pval].id
+                dup_name = phone_map[pval].name
+                break
+        if not dup_id:
+            for e in (data.get("emails") or []):
+                eval_ = e.get("value") if isinstance(e, dict) else e
+                if eval_ and eval_.lower() in email_map:
+                    match = email_map[eval_.lower()]
+                    dup_id = match.id
+                    dup_name = match.name
+                    break
         previews.append(ImportContactPreview(**data, duplicate_of=dup_id, duplicate_name=dup_name))
 
     return previews
@@ -504,9 +513,12 @@ async def confirm_import(
             continue
 
         c = item.contact
+        phones_data = [p.model_dump() for p in c.phones] if c.phones else None
+        emails_data = [e.model_dump() for e in c.emails] if c.emails else None
         fields = {
-            "name": c.name, "nickname": c.nickname, "email": c.email,
-            "phone": c.phone, "birthday": c.birthday, "job_title": c.job_title,
+            "name": c.name, "nickname": c.nickname,
+            "phones": phones_data, "emails": emails_data,
+            "birthday": c.birthday, "job_title": c.job_title,
             "company": c.company, "city": c.city, "state": c.state,
             "country_code": c.country_code, "postal_code": c.postal_code,
             "tags": c.tags, "general_notes": c.general_notes,
@@ -534,6 +546,16 @@ async def confirm_import(
                 existing_val = getattr(existing, field, None)
                 if existing_val is None:
                     setattr(existing, field, value)
+                elif field == "phones" and isinstance(existing_val, list) and isinstance(value, list):
+                    existing_vals = {p["value"] for p in existing_val if isinstance(p, dict)}
+                    new_entries = [p for p in value if isinstance(p, dict) and p.get("value") not in existing_vals]
+                    if new_entries:
+                        setattr(existing, field, existing_val + new_entries)
+                elif field == "emails" and isinstance(existing_val, list) and isinstance(value, list):
+                    existing_vals = {e["value"].lower() for e in existing_val if isinstance(e, dict)}
+                    new_entries = [e for e in value if isinstance(e, dict) and e.get("value", "").lower() not in existing_vals]
+                    if new_entries:
+                        setattr(existing, field, existing_val + new_entries)
                 elif field == "tags" and isinstance(existing_val, list) and isinstance(value, list):
                     setattr(existing, field, list(dict.fromkeys(existing_val + value)))
                 elif field == "general_notes" and existing_val and value:

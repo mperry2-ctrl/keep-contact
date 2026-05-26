@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from sqlalchemy import String, Text, Boolean, Integer, Date, DateTime, ForeignKey, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from .database import Base
 
 
@@ -13,8 +13,8 @@ class Contact(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     nickname: Mapped[str | None] = mapped_column(String(255))
-    email: Mapped[str | None] = mapped_column(String(255))
-    phone: Mapped[str | None] = mapped_column(String(50))
+    phones: Mapped[list[dict] | None] = mapped_column(JSONB)
+    emails: Mapped[list[dict] | None] = mapped_column(JSONB)
     birthday: Mapped[date | None] = mapped_column(Date)
     job_title: Mapped[str | None] = mapped_column(String(255))
     company: Mapped[str | None] = mapped_column(String(255))
@@ -48,8 +48,8 @@ class UserProfile(Base):
     state: Mapped[str | None] = mapped_column(String(255))
     country_code: Mapped[str | None] = mapped_column(String(2))
     postal_code: Mapped[str | None] = mapped_column(String(20))
-    phones: Mapped[list[str] | None] = mapped_column(ARRAY(String))
-    emails: Mapped[list[str] | None] = mapped_column(ARRAY(String))
+    phones: Mapped[list[dict] | None] = mapped_column(JSONB)
+    emails: Mapped[list[dict] | None] = mapped_column(JSONB)
     photo_url: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

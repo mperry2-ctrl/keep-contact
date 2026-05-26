@@ -303,10 +303,13 @@ export default function ImportContacts() {
                     )}
                   </td>
                   <td style={td}>
-                    {row.contact.phone && <div>{row.contact.phone}</div>}
-                    {row.contact.email && (
-                      <div style={{ color: '#555', fontSize: '0.8rem' }}>{row.contact.email}</div>
-                    )}
+                    {row.contact.phones?.filter(p => p.value).map((p, i) => (
+                      <div key={i}>{p.value} <span style={{ color: '#aaa', fontSize: '0.75rem' }}>({p.label})</span></div>
+                    ))}
+                    {row.contact.emails?.filter(e => e.value).map((e, i) => (
+                      <div key={i} style={{ color: '#555', fontSize: '0.8rem' }}>{e.value} <span style={{ color: '#aaa', fontSize: '0.75rem' }}>({e.label})</span></div>
+                    ))}
+                    {!row.contact.phones?.length && !row.contact.emails?.length && <span style={{ color: '#ccc' }}>—</span>}
                   </td>
                   <td style={td}>
                     {row.contact.job_title || row.contact.company
