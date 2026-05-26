@@ -282,14 +282,24 @@ export default function ContactDetail() {
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {contact.birthday && (
             <li style={{ borderBottom: '1px solid #e5e7eb', padding: '0.75rem 0' }}>
-              <div style={{ fontWeight: 600, marginBottom: 2 }}>
-                Birthday
-                <span style={{ fontWeight: 400, color: '#555', fontSize: '0.875rem' }}> · birthday</span>
-                <span style={{ color: '#2563eb', fontSize: '0.75rem', marginLeft: 6 }}>↻ annual</span>
-              </div>
-              <div style={{ fontSize: '0.875rem', color: '#555' }}>
-                {contact.birthday}
-                <span style={{ color: '#888', marginLeft: 8, fontSize: '0.75rem' }}>Set via contact info</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                    Birthday
+                    <span style={{ fontWeight: 400, color: '#555', fontSize: '0.875rem' }}> · birthday</span>
+                    <span style={{ color: '#2563eb', fontSize: '0.75rem', marginLeft: 6 }}>↻ annual</span>
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: '#555' }}>{contact.birthday}</div>
+                </div>
+                <button
+                  onClick={async () => {
+                    const updated = await contactsApi.update(contact.id, { name: contact.name, birthday: null })
+                    setContact(updated)
+                  }}
+                  style={{ fontSize: '0.75rem', color: '#888', border: 'none', background: 'none', cursor: 'pointer', padding: '2px 6px', flexShrink: 0 }}
+                >
+                  ✕
+                </button>
               </div>
             </li>
           )}

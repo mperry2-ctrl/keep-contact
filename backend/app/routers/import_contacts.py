@@ -4,7 +4,6 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 
 import httpx
-import phonenumbers
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,10 +15,16 @@ try:
 except ImportError:
     _VOBJECT_OK = False
 
+try:
+    import phonenumbers
+    _PHONENUMBERS_OK = True
+except ImportError:
+    _PHONENUMBERS_OK = False
+
 from ..auth import get_current_user
 from ..config import settings
 from ..database import get_db
-from ..models import Contact, LifeEvent
+from ..models import Contact
 from ..schemas import ImportContactPreview, ImportConfirmRequest, ImportConfirmResult
 
 router = APIRouter(prefix="/import", tags=["import"])
@@ -83,6 +88,8 @@ def _get_session(key: str) -> Optional[list[dict]]:
 def _normalize_phone(raw: str) -> str:
     if not raw or not raw.strip():
         return raw
+    if not _PHONENUMBERS_OK:
+        return raw.strip()
     try:
         parsed = phonenumbers.parse(raw.strip(), "US")
         if phonenumbers.is_valid_number(parsed):
@@ -508,15 +515,6 @@ async def confirm_import(
         if item.action == "import":
             new_contact = Contact(**fields, user_id=uid)
             db.add(new_contact)
-            await db.flush()
-            if c.birthday:
-                db.add(LifeEvent(
-                    contact_id=new_contact.id,
-                    title="Birthday",
-                    event_type="birthday",
-                    event_date=c.birthday,
-                    is_recurring=True,
-                ))
             imported += 1
 
         elif item.action == "merge" and item.merge_into:
