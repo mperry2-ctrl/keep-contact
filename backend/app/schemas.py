@@ -133,6 +133,41 @@ class UserSettingsResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserProfileUpsert(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    birthday: Optional[date] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country_code: Optional[str] = None
+    postal_code: Optional[str] = None
+    phones: Optional[list[str]] = None
+    emails: Optional[list[str]] = None
+    photo_url: Optional[str] = None
+
+
+class UserProfileResponse(BaseModel):
+    user_id: uuid.UUID
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    birthday: Optional[date] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country_code: Optional[str] = None
+    postal_code: Optional[str] = None
+    phones: Optional[list[str]] = None
+    emails: Optional[list[str]] = None
+    photo_url: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ImportContactPreview(BaseModel):
     name: str
     nickname: Optional[str] = None
