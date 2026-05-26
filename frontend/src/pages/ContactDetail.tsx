@@ -293,7 +293,7 @@ export default function ContactDetail() {
                 </div>
                 <button
                   onClick={async () => {
-                    const updated = await contactsApi.update(contact.id, { birthday: null })
+                    const updated = await contactsApi.update(contact.id, { name: contact.name, birthday: null })
                     setContact(updated)
                   }}
                   style={{ fontSize: '0.75rem', color: '#888', border: 'none', background: 'none', cursor: 'pointer', padding: '2px 6px', flexShrink: 0 }}
