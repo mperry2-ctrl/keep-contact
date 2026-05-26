@@ -24,7 +24,7 @@ except ImportError:
 from ..auth import get_current_user
 from ..config import settings
 from ..database import get_db
-from ..models import Contact, LifeEvent
+from ..models import Contact
 from ..schemas import ImportContactPreview, ImportConfirmRequest, ImportConfirmResult
 
 router = APIRouter(prefix="/import", tags=["import"])
@@ -515,15 +515,6 @@ async def confirm_import(
         if item.action == "import":
             new_contact = Contact(**fields, user_id=uid)
             db.add(new_contact)
-            await db.flush()
-            if c.birthday:
-                db.add(LifeEvent(
-                    contact_id=new_contact.id,
-                    title="Birthday",
-                    event_type="birthday",
-                    event_date=c.birthday,
-                    is_recurring=True,
-                ))
             imported += 1
 
         elif item.action == "merge" and item.merge_into:
