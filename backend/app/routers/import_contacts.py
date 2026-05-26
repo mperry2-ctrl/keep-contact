@@ -4,7 +4,6 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 
 import httpx
-import phonenumbers
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +14,12 @@ try:
     _VOBJECT_OK = True
 except ImportError:
     _VOBJECT_OK = False
+
+try:
+    import phonenumbers
+    _PHONENUMBERS_OK = True
+except ImportError:
+    _PHONENUMBERS_OK = False
 
 from ..auth import get_current_user
 from ..config import settings
@@ -83,6 +88,8 @@ def _get_session(key: str) -> Optional[list[dict]]:
 def _normalize_phone(raw: str) -> str:
     if not raw or not raw.strip():
         return raw
+    if not _PHONENUMBERS_OK:
+        return raw.strip()
     try:
         parsed = phonenumbers.parse(raw.strip(), "US")
         if phonenumbers.is_valid_number(parsed):
