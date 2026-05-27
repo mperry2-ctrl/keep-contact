@@ -1,27 +1,22 @@
 import uuid
 from datetime import date, datetime
 from typing import Optional, Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 InteractionMedium = Literal["in-person", "call", "text", "email", "social", "other"]
-
-
-class LabeledValue(BaseModel):
-    value: str
-    label: str
 
 
 class ContactCreate(BaseModel):
     name: str
     nickname: Optional[str] = None
-    phones: Optional[list[LabeledValue]] = None
-    emails: Optional[list[LabeledValue]] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None  # stored in E.164 format e.g. +12125551234
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
-    country_code: Optional[str] = None
+    country_code: Optional[str] = None   # ISO 3166-1 alpha-2 e.g. "US"
     postal_code: Optional[str] = None
     tags: Optional[list[str]] = None
     general_notes: Optional[str] = None
@@ -31,8 +26,8 @@ class ContactCreate(BaseModel):
 class ContactUpdate(BaseModel):
     name: Optional[str] = None
     nickname: Optional[str] = None
-    phones: Optional[list[LabeledValue]] = None
-    emails: Optional[list[LabeledValue]] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
@@ -50,8 +45,8 @@ class ContactResponse(BaseModel):
     user_id: uuid.UUID
     name: str
     nickname: Optional[str] = None
-    phones: Optional[list[LabeledValue]] = None
-    emails: Optional[list[LabeledValue]] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None
@@ -79,6 +74,7 @@ class LifeEventCreate(BaseModel):
     is_recurring: bool = False
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
+    reminder_days_after: Optional[int] = None
 
 
 class LifeEventUpdate(BaseModel):
@@ -88,6 +84,7 @@ class LifeEventUpdate(BaseModel):
     is_recurring: Optional[bool] = None
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
+    reminder_days_after: Optional[int] = None
 
 
 class LifeEventResponse(BaseModel):
@@ -99,6 +96,7 @@ class LifeEventResponse(BaseModel):
     is_recurring: bool
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
+    reminder_days_after: Optional[int] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -148,8 +146,8 @@ class UserProfileUpsert(BaseModel):
     state: Optional[str] = None
     country_code: Optional[str] = None
     postal_code: Optional[str] = None
-    phones: Optional[list[LabeledValue]] = None
-    emails: Optional[list[LabeledValue]] = None
+    phones: Optional[list[str]] = None
+    emails: Optional[list[str]] = None
     photo_url: Optional[str] = None
 
 
@@ -164,8 +162,8 @@ class UserProfileResponse(BaseModel):
     state: Optional[str] = None
     country_code: Optional[str] = None
     postal_code: Optional[str] = None
-    phones: Optional[list[LabeledValue]] = None
-    emails: Optional[list[LabeledValue]] = None
+    phones: Optional[list[str]] = None
+    emails: Optional[list[str]] = None
     photo_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
@@ -176,8 +174,8 @@ class UserProfileResponse(BaseModel):
 class ImportContactPreview(BaseModel):
     name: str
     nickname: Optional[str] = None
-    phones: Optional[list[LabeledValue]] = None
-    emails: Optional[list[LabeledValue]] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     birthday: Optional[date] = None
     job_title: Optional[str] = None
     company: Optional[str] = None

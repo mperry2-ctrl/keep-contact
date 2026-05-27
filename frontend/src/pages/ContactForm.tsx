@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getCountries } from 'react-phone-number-input'
+import PhoneInput, { getCountries } from 'react-phone-number-input'
+import type { Value as PhoneValue } from 'react-phone-number-input'
+import { isValidPhoneNumber } from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
 import { contactsApi, type ContactPayload } from '../api/contacts'
-import { LabeledFieldList, type LabeledEntry } from '../components/LabeledFieldList'
-
-const PHONE_LABELS = ['mobile', 'work', 'home', 'other']
-const EMAIL_LABELS = ['personal', 'work', 'other']
 
 const CHECK_IN_OPTIONS = [
   { label: 'No preference', value: '' },
@@ -15,6 +14,7 @@ const CHECK_IN_OPTIONS = [
   { label: 'Quarterly', value: '90' },
 ]
 
+// Build country list: United States first, then rest alphabetically
 const countryDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' })
 const _allCountries = getCountries()
   .map(code => ({ code, name: countryDisplayNames.of(code) ?? code }))
@@ -28,17 +28,14 @@ const label = { display: 'block', fontWeight: 600, marginBottom: 4, fontSize: '0
 const fieldWrap = { marginBottom: 16 } as const
 const row = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 } as const
 
-const EMPTY_PHONE: LabeledEntry = { value: '', label: 'mobile' }
-const EMPTY_EMAIL: LabeledEntry = { value: '', label: 'personal' }
-
 export default function ContactForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = Boolean(id)
 
   const [form, setForm] = useState<ContactPayload>({ name: '' })
-  const [phones, setPhones] = useState<LabeledEntry[]>([EMPTY_PHONE])
-  const [emails, setEmails] = useState<LabeledEntry[]>([EMPTY_EMAIL])
+  const [phone, setPhone] = useState<PhoneValue | undefined>(undefined)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
   const [tagsInput, setTagsInput] = useState('')
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
@@ -50,6 +47,8 @@ export default function ContactForm() {
       setForm({
         name: contact.name,
         nickname: contact.nickname,
+        email: contact.email,
+        phone: contact.phone,
         birthday: contact.birthday,
         job_title: contact.job_title,
         company: contact.company,
@@ -61,8 +60,7 @@ export default function ContactForm() {
         general_notes: contact.general_notes,
         check_in_frequency_days: contact.check_in_frequency_days,
       })
-      setPhones(contact.phones?.length ? contact.phones : [EMPTY_PHONE])
-      setEmails(contact.emails?.length ? contact.emails : [EMPTY_EMAIL])
+      setPhone((contact.phone as PhoneValue) ?? undefined)
       setTagsInput(contact.tags?.join(', ') ?? '')
     }).catch(() => setError('Failed to load contact'))
       .finally(() => setLoading(false))
@@ -72,19 +70,22 @@ export default function ContactForm() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm(f => ({ ...f, [field]: e.target.value || null }))
 
+  const validatePhone = () => {
+    if (!phone) { setPhoneError(null); return }
+    setPhoneError(isValidPhoneNumber(phone) ? null : 'Enter a valid phone number including country code')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (phone && !isValidPhoneNumber(phone)) {
+      setPhoneError('Enter a valid phone number including country code')
+      return
+    }
     setSaving(true)
     setError(null)
     const tags = tagsInput.trim() ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : null
-    const filteredPhones = phones.filter(p => p.value.trim()).map(p => ({ value: p.value.trim(), label: p.label }))
-    const filteredEmails = emails.filter(em => em.value.trim()).map(em => ({ value: em.value.trim(), label: em.label }))
-    const payload: ContactPayload = {
-      ...form,
-      phones: filteredPhones.length ? filteredPhones : null,
-      emails: filteredEmails.length ? filteredEmails : null,
-      tags,
-    }
+    // phone is already E.164 from react-phone-number-input
+    const payload = { ...form, phone: phone ?? null, tags }
     try {
       if (isEdit && id) {
         await contactsApi.update(id, payload)
@@ -117,21 +118,27 @@ export default function ContactForm() {
           <input value={form.nickname ?? ''} onChange={set('nickname')} />
         </div>
 
-        <LabeledFieldList
-          heading="Phone"
-          entries={phones}
-          valuePlaceholder="+1 555 123 4567"
-          labelOptions={PHONE_LABELS}
-          onChange={setPhones}
-        />
-
-        <LabeledFieldList
-          heading="Email"
-          entries={emails}
-          valuePlaceholder="you@example.com"
-          labelOptions={EMAIL_LABELS}
-          onChange={setEmails}
-        />
+        <div style={row}>
+          <div>
+            <label style={label}>Email</label>
+            <input type="email" value={form.email ?? ''} onChange={set('email')} />
+          </div>
+          <div>
+            <label style={label}>Phone (E.164)</label>
+            <PhoneInput
+              value={phone}
+              onChange={(val) => setPhone(val)}
+              onBlur={validatePhone}
+              defaultCountry="US"
+              international
+              style={{ '--PhoneInputCountryFlag-height': '1em' } as React.CSSProperties}
+            />
+            {phoneError && <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: 4 }}>{phoneError}</p>}
+            {phone && isValidPhoneNumber(phone) && (
+              <p style={{ color: '#16a34a', fontSize: '0.75rem', marginTop: 4 }}>Stored as: {phone}</p>
+            )}
+          </div>
+        </div>
 
         <div style={fieldWrap}>
           <label style={label}>Birthday</label>
@@ -162,7 +169,7 @@ export default function ContactForm() {
 
         <div style={row}>
           <div>
-            <label style={label}>Country</label>
+            <label style={label}>Country (ISO 3166-1)</label>
             <select
               value={form.country_code ?? ''}
               onChange={e => setForm(f => ({ ...f, country_code: e.target.value || null }))}
@@ -200,7 +207,7 @@ export default function ContactForm() {
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={saving}>
+          <button type="submit" disabled={saving || !!phoneError}>
             {saving ? 'Saving...' : 'Save'}
           </button>
           <button type="button" onClick={() => navigate(isEdit && id ? `/contacts/${id}` : '/contacts')}>

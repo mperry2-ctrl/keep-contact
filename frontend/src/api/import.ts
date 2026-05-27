@@ -1,14 +1,13 @@
 import { api } from './client'
 import { supabase } from '../lib/supabase'
-import type { LabeledEntry } from './contacts'
 
 const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000'
 
 export interface ImportContactPreview {
   name: string
   nickname: string | null
-  phones: LabeledEntry[] | null
-  emails: LabeledEntry[] | null
+  email: string | null
+  phone: string | null
   birthday: string | null
   job_title: string | null
   company: string | null

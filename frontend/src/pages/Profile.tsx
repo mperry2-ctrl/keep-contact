@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react'
 import { profileApi, type UserProfilePayload } from '../api/profile'
-import { LabeledFieldList, type LabeledEntry } from '../components/LabeledFieldList'
-
-const PHONE_LABELS = ['mobile', 'work', 'home', 'other']
-const EMAIL_LABELS = ['personal', 'work', 'other']
 
 const COUNTRIES = [
   ['US', 'United States'], ['GB', 'United Kingdom'], ['CA', 'Canada'],
@@ -15,8 +11,55 @@ const COUNTRIES = [
   ['MX', 'Mexico'], ['KR', 'South Korea'], ['SG', 'Singapore'],
 ]
 
-const EMPTY_PHONE: LabeledEntry = { value: '', label: 'mobile' }
-const EMPTY_EMAIL: LabeledEntry = { value: '', label: 'personal' }
+function FieldList({
+  label,
+  values,
+  placeholder,
+  onChange,
+}: {
+  label: string
+  values: string[]
+  placeholder: string
+  onChange: (vals: string[]) => void
+}) {
+  return (
+    <div style={{ marginBottom: '1.25rem' }}>
+      <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: 6 }}>
+        {label}
+      </label>
+      {values.map((v, i) => (
+        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+          <input
+            value={v}
+            placeholder={i === 0 ? placeholder : `Additional ${label.toLowerCase()}`}
+            onChange={e => {
+              const next = [...values]
+              next[i] = e.target.value
+              onChange(next)
+            }}
+            style={{ flex: 1 }}
+          />
+          {values.length > 1 && (
+            <button
+              type="button"
+              onClick={() => onChange(values.filter((_, idx) => idx !== i))}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: '0 6px', fontSize: '1rem' }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...values, ''])}
+        style={{ fontSize: '0.8rem', color: '#555', background: 'none', border: '1px dashed #ccc', borderRadius: 4, padding: '3px 10px', cursor: 'pointer', marginTop: 2 }}
+      >
+        + Add {label.toLowerCase()}
+      </button>
+    </div>
+  )
+}
 
 export default function Profile() {
   const [loading, setLoading] = useState(true)
@@ -33,8 +76,8 @@ export default function Profile() {
   const [state, setState] = useState('')
   const [countryCode, setCountryCode] = useState('')
   const [postalCode, setPostalCode] = useState('')
-  const [phones, setPhones] = useState<LabeledEntry[]>([EMPTY_PHONE])
-  const [emails, setEmails] = useState<LabeledEntry[]>([EMPTY_EMAIL])
+  const [phones, setPhones] = useState<string[]>([''])
+  const [emails, setEmails] = useState<string[]>([''])
 
   useEffect(() => {
     profileApi.get()
@@ -48,10 +91,11 @@ export default function Profile() {
         setState(p.state ?? '')
         setCountryCode(p.country_code ?? '')
         setPostalCode(p.postal_code ?? '')
-        setPhones(p.phones?.length ? p.phones : [EMPTY_PHONE])
-        setEmails(p.emails?.length ? p.emails : [EMPTY_EMAIL])
+        setPhones(p.phones?.length ? p.phones : [''])
+        setEmails(p.emails?.length ? p.emails : [''])
       })
       .catch(e => {
+        // 404 means no profile yet — start with blank form
         if (!e.message?.includes('404')) setError('Failed to load profile')
       })
       .finally(() => setLoading(false))
@@ -73,8 +117,8 @@ export default function Profile() {
       state: state || null,
       country_code: countryCode || null,
       postal_code: postalCode || null,
-      phones: phones.filter(p => p.value.trim()).map(p => ({ value: p.value.trim(), label: p.label })) || null,
-      emails: emails.filter(em => em.value.trim()).map(em => ({ value: em.value.trim(), label: em.label })) || null,
+      phones: phones.filter(p => p.trim()) || null,
+      emails: emails.filter(e => e.trim()) || null,
       photo_url: null,
     }
 
@@ -126,21 +170,8 @@ export default function Profile() {
           <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
         </div>
 
-        <LabeledFieldList
-          heading="Phone"
-          entries={phones}
-          valuePlaceholder="+1 555 123 4567"
-          labelOptions={PHONE_LABELS}
-          onChange={setPhones}
-        />
-
-        <LabeledFieldList
-          heading="Email"
-          entries={emails}
-          valuePlaceholder="you@example.com"
-          labelOptions={EMAIL_LABELS}
-          onChange={setEmails}
-        />
+        <FieldList label="Phone" values={phones} placeholder="+1 555 123 4567" onChange={setPhones} />
+        <FieldList label="Email" values={emails} placeholder="you@example.com" onChange={setEmails} />
 
         <div style={{ marginBottom: '1.25rem' }}>
           <label style={labelStyle}>Bio</label>

@@ -1,23 +1,18 @@
 import { api } from './client'
 
-export interface LabeledEntry {
-  value: string
-  label: string
-}
-
 export interface Contact {
   id: string
   user_id: string
   name: string
   nickname: string | null
-  phones: LabeledEntry[] | null
-  emails: LabeledEntry[] | null
+  email: string | null
+  phone: string | null
   birthday: string | null
   job_title: string | null
   company: string | null
   city: string | null
   state: string | null
-  country_code: string | null
+  country_code: string | null  // ISO 3166-1 alpha-2
   postal_code: string | null
   tags: string[] | null
   general_notes: string | null
@@ -30,8 +25,8 @@ export interface Contact {
 export interface ContactPayload {
   name: string
   nickname?: string | null
-  phones?: LabeledEntry[] | null
-  emails?: LabeledEntry[] | null
+  email?: string | null
+  phone?: string | null
   birthday?: string | null
   job_title?: string | null
   company?: string | null

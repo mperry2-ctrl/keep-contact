@@ -11,6 +11,7 @@ export interface LifeEvent {
   is_recurring: boolean
   notes: string | null
   reminder_days_before: number | null
+  reminder_days_after: number | null
   created_at: string
 }
 
@@ -21,6 +22,7 @@ export interface LifeEventPayload {
   is_recurring?: boolean
   notes?: string | null
   reminder_days_before?: number | null
+  reminder_days_after?: number | null
 }
 
 export const lifeEventsApi = {
