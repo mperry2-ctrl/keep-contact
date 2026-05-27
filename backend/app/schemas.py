@@ -146,8 +146,8 @@ class UserProfileUpsert(BaseModel):
     state: Optional[str] = None
     country_code: Optional[str] = None
     postal_code: Optional[str] = None
-    phones: Optional[list[str]] = None
-    emails: Optional[list[str]] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
     photo_url: Optional[str] = None
 
 
@@ -162,8 +162,8 @@ class UserProfileResponse(BaseModel):
     state: Optional[str] = None
     country_code: Optional[str] = None
     postal_code: Optional[str] = None
-    phones: Optional[list[str]] = None
-    emails: Optional[list[str]] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
     photo_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
