@@ -74,6 +74,7 @@ class LifeEventCreate(BaseModel):
     is_recurring: bool = False
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
+    reminder_days_after: Optional[int] = None
 
 
 class LifeEventUpdate(BaseModel):
@@ -83,6 +84,7 @@ class LifeEventUpdate(BaseModel):
     is_recurring: Optional[bool] = None
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
+    reminder_days_after: Optional[int] = None
 
 
 class LifeEventResponse(BaseModel):
@@ -94,6 +96,7 @@ class LifeEventResponse(BaseModel):
     is_recurring: bool
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
+    reminder_days_after: Optional[int] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -129,6 +132,41 @@ class UserSettingsResponse(BaseModel):
     email_reminders_enabled: bool
     sms_reminders_enabled: bool
     sms_phone: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class UserProfileUpsert(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    birthday: Optional[date] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country_code: Optional[str] = None
+    postal_code: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    photo_url: Optional[str] = None
+
+
+class UserProfileResponse(BaseModel):
+    user_id: uuid.UUID
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    birthday: Optional[date] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country_code: Optional[str] = None
+    postal_code: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    photo_url: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 

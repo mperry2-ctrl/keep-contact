@@ -15,6 +15,15 @@ const REMINDER_OPTIONS = [
   { label: '1 month before', value: '30' },
 ]
 
+const AFTER_REMINDER_OPTIONS = [
+  { label: 'No reminder', value: '' },
+  { label: '1 day after', value: '1' },
+  { label: '3 days after', value: '3' },
+  { label: '1 week after', value: '7' },
+  { label: '2 weeks after', value: '14' },
+  { label: '1 month after', value: '30' },
+]
+
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
   return (
@@ -248,15 +257,21 @@ export default function ContactDetail() {
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Date</label>
                 <input type="date" value={newEvent.event_date ?? ''} onChange={e => setNewEvent(f => ({ ...f, event_date: e.target.value || null }))} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Remind me</label>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Remind before</label>
                 <select value={newEvent.reminder_days_before?.toString() ?? ''} onChange={e => setNewEvent(f => ({ ...f, reminder_days_before: e.target.value ? parseInt(e.target.value) : null }))}>
                   {REMINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Remind after</label>
+                <select value={newEvent.reminder_days_after?.toString() ?? ''} onChange={e => setNewEvent(f => ({ ...f, reminder_days_after: e.target.value ? parseInt(e.target.value) : null }))}>
+                  {AFTER_REMINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
             </div>
@@ -327,15 +342,21 @@ export default function ContactDetail() {
                       </select>
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Date</label>
                       <input type="date" value={editEventForm.event_date ?? ''} onChange={e => setEditEventForm(f => ({ ...f, event_date: e.target.value || null }))} />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Remind me</label>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Remind before</label>
                       <select value={editEventForm.reminder_days_before?.toString() ?? ''} onChange={e => setEditEventForm(f => ({ ...f, reminder_days_before: e.target.value ? parseInt(e.target.value) : null }))}>
                         {REMINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3 }}>Remind after</label>
+                      <select value={editEventForm.reminder_days_after?.toString() ?? ''} onChange={e => setEditEventForm(f => ({ ...f, reminder_days_after: e.target.value ? parseInt(e.target.value) : null }))}>
+                        {AFTER_REMINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
                     </div>
                   </div>
@@ -359,14 +380,20 @@ export default function ContactDetail() {
                       <span style={{ fontWeight: 400, color: '#555', fontSize: '0.875rem' }}> · {ev.event_type}</span>
                       {ev.is_recurring && <span style={{ color: '#2563eb', fontSize: '0.75rem', marginLeft: 6 }}>↻ annual</span>}
                     </div>
-                    {ev.event_date && <div style={{ fontSize: '0.875rem', color: '#555' }}>{ev.event_date}{ev.reminder_days_before ? ` · remind ${ev.reminder_days_before}d before` : ''}</div>}
+                    {ev.event_date && (
+                      <div style={{ fontSize: '0.875rem', color: '#555' }}>
+                        {ev.event_date}
+                        {ev.reminder_days_before ? ` · remind ${ev.reminder_days_before}d before` : ''}
+                        {ev.reminder_days_after ? ` · remind ${ev.reminder_days_after}d after` : ''}
+                      </div>
+                    )}
                     {ev.notes && <p style={{ color: '#444', fontSize: '0.875rem', whiteSpace: 'pre-wrap', marginTop: 2 }}>{ev.notes}</p>}
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                     <button
                       onClick={() => {
                         setEditingEventId(ev.id)
-                        setEditEventForm({ title: ev.title, event_type: ev.event_type, event_date: ev.event_date, is_recurring: ev.is_recurring, notes: ev.notes, reminder_days_before: ev.reminder_days_before })
+                        setEditEventForm({ title: ev.title, event_type: ev.event_type, event_date: ev.event_date, is_recurring: ev.is_recurring, notes: ev.notes, reminder_days_before: ev.reminder_days_before, reminder_days_after: ev.reminder_days_after })
                       }}
                       style={{ fontSize: '0.75rem', padding: '2px 8px' }}
                     >
