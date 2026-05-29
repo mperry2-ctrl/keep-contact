@@ -1,3 +1,4 @@
+import re
 import uuid
 import urllib.parse
 from datetime import date, datetime, timedelta
@@ -61,6 +62,22 @@ _COUNTRY_NAMES: dict[str, str] = {
     "greece": "GR", "thailand": "TH", "indonesia": "ID", "malaysia": "MY",
     "philippines": "PH", "vietnam": "VN", "taiwan": "TW", "hong kong": "HK",
 }
+
+
+def _strip_photo_data(text: str) -> str:
+    """Remove PHOTO properties (base64 images) which can make exports huge."""
+    lines = text.splitlines()
+    out: list[str] = []
+    skip = False
+    for line in lines:
+        if re.match(r'^PHOTO[;:]', line, re.IGNORECASE):
+            skip = True
+            continue
+        if skip and line and line[0] in (' ', '\t'):
+            continue  # folded continuation line
+        skip = False
+        out.append(line)
+    return '\r\n'.join(out)
 
 
 def _store_session(data: list[dict]) -> str:
@@ -473,6 +490,8 @@ async def upload_vcf(
         text = content.decode("utf-8")
     except UnicodeDecodeError:
         text = content.decode("latin-1")
+
+    text = _strip_photo_data(text)
 
     contacts = []
     try:

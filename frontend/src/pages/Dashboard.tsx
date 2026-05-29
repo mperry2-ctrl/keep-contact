@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { dashboardApi, type OverdueContact, type UpcomingEvent } from '../api/dashboard'
+import { logApi } from '../api/log'
+import type { Contact } from '../api/contacts'
+import type { EventType } from '../api/life_events'
+import ContactPicker from '../components/ContactPicker'
 
 const EVENT_EMOJI: Record<string, string> = {
   birthday: '🎂',
@@ -10,6 +14,9 @@ const EVENT_EMOJI: Record<string, string> = {
   meeting: '📅',
   other: '📌',
 }
+
+const MEDIUMS = ['in-person', 'call', 'text', 'email', 'social', 'other']
+const EVENT_TYPES: EventType[] = ['trip', 'milestone', 'meeting', 'other']
 
 function daysOverdueLabel(days: number) {
   if (days === 1) return '1 day overdue'
@@ -25,15 +32,197 @@ function daysUntilLabel(days: number) {
   return `In ${days} days`
 }
 
+type ModalTab = 'interaction' | 'event'
+
+interface LogModalProps {
+  onClose: () => void
+  onLogged: () => void
+}
+
+function LogModal({ onClose, onLogged }: LogModalProps) {
+  const today = new Date().toISOString().slice(0, 10)
+  const [tab, setTab] = useState<ModalTab>('interaction')
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // interaction fields
+  const [date, setDate] = useState(today)
+  const [medium, setMedium] = useState('in-person')
+  const [notes, setNotes] = useState('')
+
+  // event fields
+  const [title, setTitle] = useState('')
+  const [eventType, setEventType] = useState<EventType>('other')
+  const [eventDate, setEventDate] = useState('')
+  const [recurring, setRecurring] = useState(false)
+  const [eventNotes, setEventNotes] = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (contacts.length === 0) { setError('Select at least one contact'); return }
+    setSaving(true)
+    setError(null)
+    try {
+      const ids = contacts.map(c => c.id)
+      if (tab === 'interaction') {
+        await logApi.interaction({ contact_ids: ids, date, medium, notes: notes || null })
+      } else {
+        await logApi.event({
+          contact_ids: ids,
+          title,
+          event_type: eventType,
+          event_date: eventDate || null,
+          is_recurring: recurring,
+          notes: eventNotes || null,
+        })
+      }
+      onLogged()
+      onClose()
+    } catch {
+      setError('Failed to save. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200,
+    }} onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{
+        background: '#fff', borderRadius: 10, padding: '1.5rem',
+        width: '100%', maxWidth: 520, boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0 }}>Log</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: '#6b7280', padding: '0 4px' }}
+          >
+            ×
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 0, marginBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
+          {(['interaction', 'event'] as ModalTab[]).map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '6px 16px', fontWeight: tab === t ? 700 : 400,
+                color: tab === t ? '#111' : '#6b7280',
+                borderBottom: tab === t ? '2px solid #111' : '2px solid transparent',
+                marginBottom: -1, textTransform: 'capitalize',
+              }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={labelStyle}>Who</label>
+            <ContactPicker
+              selected={contacts}
+              onChange={setContacts}
+              placeholder="Search contacts…"
+            />
+          </div>
+
+          {tab === 'interaction' ? (
+            <>
+              <div style={{ display: 'flex', gap: 8, marginBottom: '0.75rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>Date</label>
+                  <input type="date" value={date} onChange={e => setDate(e.target.value)} required style={{ width: '100%', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>How</label>
+                  <select value={medium} onChange={e => setMedium(e.target.value)} style={{ width: '100%' }}>
+                    {MEDIUMS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={labelStyle}>Notes</label>
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="What did you talk about?"
+                  rows={3}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', gap: 8, marginBottom: '0.75rem' }}>
+                <div style={{ flex: 2 }}>
+                  <label style={labelStyle}>Title *</label>
+                  <input value={title} onChange={e => setTitle(e.target.value)} required style={{ width: '100%', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>Type</label>
+                  <select value={eventType} onChange={e => setEventType(e.target.value as EventType)} style={{ width: '100%' }}>
+                    {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={labelStyle}>Date</label>
+                <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={labelStyle}>Notes</label>
+                <textarea
+                  value={eventNotes}
+                  onChange={e => setEventNotes(e.target.value)}
+                  rows={2}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.875rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} />
+                Recurring annually
+              </label>
+            </>
+          )}
+
+          {error && <p style={{ color: '#dc2626', marginBottom: '0.75rem', fontSize: '0.875rem' }}>{error}</p>}
+
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" onClick={onClose}>Cancel</button>
+            <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontWeight: 600, fontSize: '0.8rem', marginBottom: 3, color: '#444',
+}
+
 export default function Dashboard() {
   const [overdue, setOverdue] = useState<OverdueContact[]>([])
   const [upcoming, setUpcoming] = useState<UpcomingEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [showLogModal, setShowLogModal] = useState(false)
+
+  function loadData() {
+    return Promise.all([dashboardApi.overdue(), dashboardApi.upcoming()])
+      .then(([o, u]) => { setOverdue(o); setUpcoming(u) })
+  }
 
   useEffect(() => {
-    Promise.all([dashboardApi.overdue(), dashboardApi.upcoming()])
-      .then(([o, u]) => { setOverdue(o); setUpcoming(u) })
-      .finally(() => setLoading(false))
+    loadData().finally(() => setLoading(false))
   }, [])
 
   const handleSignOut = () => supabase.auth.signOut()
@@ -42,9 +231,19 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: 800, margin: '0 auto' }}>
+      {showLogModal && (
+        <LogModal
+          onClose={() => setShowLogModal(false)}
+          onLogged={loadData}
+        />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1 style={{ margin: 0 }}>Dashboard</h1>
-        <button onClick={handleSignOut}>Sign out</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setShowLogModal(true)}>+ Log</button>
+          <button onClick={handleSignOut}>Sign out</button>
+        </div>
       </div>
 
       <section style={{ marginBottom: '2.5rem' }}>

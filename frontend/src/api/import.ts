@@ -52,7 +52,9 @@ export const importApi = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     })
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+    if (!res.ok) throw new Error(`${res.status}`)
+    const ct = res.headers.get('content-type') ?? ''
+    if (!ct.includes('json')) throw new Error('200: unexpected non-JSON response')
     return res.json()
   },
 

@@ -6,6 +6,8 @@ export interface Interaction {
   date: string
   medium: string
   notes: string | null
+  group_id: string | null
+  group_participant_names: string | null
   created_at: string
 }
 

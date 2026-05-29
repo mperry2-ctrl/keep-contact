@@ -73,17 +73,34 @@ export default function ImportContacts() {
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    if (fileInputRef.current) fileInputRef.current.value = ''
+
+    const MB = 1024 * 1024
+    if (file.size > 15 * MB) {
+      setError(
+        `File too large (${(file.size / MB).toFixed(0)} MB). Contact photos embedded in the export are likely the cause. ` +
+        `Try exporting without photos, or use Google import instead.`
+      )
+      return
+    }
+
     setError(null)
     setStage('loading')
     try {
       const contacts = await importApi.uploadVcf(file)
       setRows(buildRows(contacts))
       setStage('preview')
-    } catch {
-      setError('Could not parse the file. Make sure it is a valid .vcf file.')
+    } catch (err) {
+      const status = err instanceof Error ? err.message.split(':')[0].trim() : ''
+      if (status === '413') {
+        setError('File too large for the server. If your export includes contact photos, try exporting without them and upload again.')
+      } else if (status === '400') {
+        setError('Could not parse this file. Make sure it is a valid .vcf file exported from a contacts app.')
+      } else {
+        setError('Upload failed. Please try again.')
+      }
       setStage('source')
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -207,8 +224,12 @@ export default function ImportContacts() {
 
         <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: '1.5rem' }}>
           <h3 style={{ margin: '0 0 0.5rem' }}>Upload .vcf file</h3>
-          <p style={{ margin: '0 0 1rem', color: '#666', fontSize: '0.875rem' }}>
+          <p style={{ margin: '0 0 0.5rem', color: '#666', fontSize: '0.875rem' }}>
             Export from Apple Contacts, Google Contacts, or Outlook, then upload here.
+          </p>
+          <p style={{ margin: '0 0 1rem', color: '#999', fontSize: '0.8rem' }}>
+            Tip: if you export from iPhone/iCloud, choose "Export vCard" from the Contacts app.
+            If the file is over 15 MB, your export likely includes contact photos — re-export without photos or use Google import.
           </p>
           <button onClick={() => fileInputRef.current?.click()} style={{ padding: '0.5rem 1.25rem' }}>
             Choose file

@@ -3,6 +3,8 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { contactsApi, type Contact } from '../api/contacts'
 import { interactionsApi, type Interaction, type InteractionPayload } from '../api/interactions'
 import { lifeEventsApi, type LifeEvent, type LifeEventPayload, type EventType } from '../api/life_events'
+import { logApi } from '../api/log'
+import ContactPicker from '../components/ContactPicker'
 
 const MEDIUMS = ['in-person', 'call', 'text', 'email', 'social', 'other']
 const EVENT_TYPES: EventType[] = ['trip', 'milestone', 'meeting', 'other']
@@ -34,20 +36,32 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   )
 }
 
-function LogForm({ contactId, onSaved }: { contactId: string; onSaved: (i: Interaction) => void }) {
+function LogForm({ contactId, onSaved }: { contactId: string; onSaved: (interactions: Interaction[]) => void }) {
   const today = new Date().toISOString().slice(0, 10)
   const [date, setDate] = useState(today)
   const [medium, setMedium] = useState('in-person')
   const [notes, setNotes] = useState('')
+  const [alsoWith, setAlsoWith] = useState<Contact[]>([])
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    const interaction = await interactionsApi.create(contactId, { date, medium, notes: notes || null })
-    onSaved(interaction)
+    if (alsoWith.length > 0) {
+      const results = await logApi.interaction({
+        contact_ids: [contactId, ...alsoWith.map(c => c.id)],
+        date,
+        medium,
+        notes: notes || null,
+      })
+      onSaved(results)
+    } else {
+      const interaction = await interactionsApi.create(contactId, { date, medium, notes: notes || null })
+      onSaved([interaction])
+    }
     setNotes('')
     setDate(today)
+    setAlsoWith([])
     setSaving(false)
   }
 
@@ -67,6 +81,17 @@ function LogForm({ contactId, onSaved }: { contactId: string; onSaved: (i: Inter
         rows={3}
         style={{ marginBottom: 8 }}
       />
+      <div style={{ marginBottom: 8 }}>
+        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 3, color: '#444' }}>
+          Also with…
+        </label>
+        <ContactPicker
+          selected={alsoWith}
+          onChange={setAlsoWith}
+          exclude={[contactId]}
+          placeholder="Add other people in this interaction…"
+        />
+      </div>
       <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Log interaction'}</button>
     </form>
   )
@@ -151,7 +176,10 @@ export default function ContactDetail() {
       )}
 
       <section>
-        <LogForm contactId={contact.id} onSaved={i => setInteractions(prev => [...prev, i].sort((a, b) => b.date.localeCompare(a.date)))} />
+        <LogForm contactId={contact.id} onSaved={newItems => {
+          const mine = newItems.filter(i => i.contact_id === contact.id)
+          setInteractions(prev => [...prev, ...mine].sort((a, b) => b.date.localeCompare(a.date)))
+        }} />
 
         <h3 style={{ marginBottom: '0.75rem' }}>Interaction history</h3>
         {interactions.length === 0 && <p style={{ color: '#888' }}>No interactions logged yet.</p>}
@@ -200,6 +228,11 @@ export default function ContactDetail() {
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: 2 }}>
                       {i.date} · <span style={{ fontWeight: 400, color: '#555' }}>{i.medium}</span>
+                      {i.group_participant_names && (
+                        <span style={{ fontWeight: 400, color: '#6b7280', fontSize: '0.8rem', marginLeft: 6 }}>
+                          with {i.group_participant_names}
+                        </span>
+                      )}
                     </div>
                     {i.notes && <p style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{i.notes}</p>}
                   </div>
@@ -380,6 +413,11 @@ export default function ContactDetail() {
                       <span style={{ fontWeight: 400, color: '#555', fontSize: '0.875rem' }}> · {ev.event_type}</span>
                       {ev.is_recurring && <span style={{ color: '#2563eb', fontSize: '0.75rem', marginLeft: 6 }}>↻ annual</span>}
                     </div>
+                    {ev.group_participant_names && (
+                      <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: 2 }}>
+                        with {ev.group_participant_names}
+                      </div>
+                    )}
                     {ev.event_date && (
                       <div style={{ fontSize: '0.875rem', color: '#555' }}>
                         {ev.event_date}
