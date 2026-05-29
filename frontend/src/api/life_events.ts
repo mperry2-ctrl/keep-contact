@@ -12,6 +12,8 @@ export interface LifeEvent {
   notes: string | null
   reminder_days_before: number | null
   reminder_days_after: number | null
+  group_id: string | null
+  group_participant_names: string | null
   created_at: string
 }
 

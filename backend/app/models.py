@@ -63,6 +63,8 @@ class Interaction(Base):
     date: Mapped[date] = mapped_column(Date, nullable=False)
     medium: Mapped[str] = mapped_column(String(50), nullable=False)  # in-person, call, text, email, social, other
     notes: Mapped[str | None] = mapped_column(Text)
+    group_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    group_participant_names: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     contact: Mapped["Contact"] = relationship(back_populates="interactions")
@@ -80,6 +82,8 @@ class LifeEvent(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     reminder_days_before: Mapped[int | None] = mapped_column(Integer)
     reminder_days_after: Mapped[int | None] = mapped_column(Integer)
+    group_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    group_participant_names: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     contact: Mapped["Contact"] = relationship(back_populates="life_events")

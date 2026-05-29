@@ -97,6 +97,8 @@ class LifeEventResponse(BaseModel):
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
     reminder_days_after: Optional[int] = None
+    group_id: Optional[uuid.UUID] = None
+    group_participant_names: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -214,12 +216,32 @@ class InteractionCreate(BaseModel):
     notes: Optional[str] = None
 
 
+class GroupInteractionCreate(BaseModel):
+    contact_ids: list[uuid.UUID]
+    date: date
+    medium: InteractionMedium
+    notes: Optional[str] = None
+
+
 class InteractionResponse(BaseModel):
     id: uuid.UUID
     contact_id: uuid.UUID
     date: date
     medium: str
     notes: Optional[str] = None
+    group_id: Optional[uuid.UUID] = None
+    group_participant_names: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class GroupEventCreate(BaseModel):
+    contact_ids: list[uuid.UUID]
+    title: str
+    event_type: EventType
+    event_date: Optional[date] = None
+    is_recurring: bool = False
+    notes: Optional[str] = None
+    reminder_days_before: Optional[int] = None
+    reminder_days_after: Optional[int] = None
