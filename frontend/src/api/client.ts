@@ -9,9 +9,12 @@ async function authHeaders(): Promise<HeadersInit> {
 }
 
 async function parseJson<T>(res: Response): Promise<T> {
-  const ct = res.headers.get('content-type') ?? ''
-  if (!ct.includes('json')) throw new Error(`${res.status}: unexpected non-JSON response`)
-  return res.json()
+  try {
+    return await res.json()
+  } catch {
+    const ct = res.headers.get('content-type') ?? 'unknown'
+    throw new Error(`Expected JSON but got ${ct} (status ${res.status})`)
+  }
 }
 
 async function get<T>(path: string): Promise<T> {

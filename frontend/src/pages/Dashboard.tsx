@@ -222,7 +222,7 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    loadData().finally(() => setLoading(false))
+    loadData().catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   const handleSignOut = () => supabase.auth.signOut()

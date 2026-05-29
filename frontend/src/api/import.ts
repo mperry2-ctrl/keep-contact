@@ -53,9 +53,11 @@ export const importApi = {
       body: formData,
     })
     if (!res.ok) throw new Error(`${res.status}`)
-    const ct = res.headers.get('content-type') ?? ''
-    if (!ct.includes('json')) throw new Error('200: unexpected non-JSON response')
-    return res.json()
+    try {
+      return await res.json()
+    } catch {
+      throw new Error(`200: unexpected non-JSON response`)
+    }
   },
 
   confirm: (contacts: ImportConfirmItem[]) =>
