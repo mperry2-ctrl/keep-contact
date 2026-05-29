@@ -8,22 +8,28 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
 }
 
+async function parseJson<T>(res: Response): Promise<T> {
+  const ct = res.headers.get('content-type') ?? ''
+  if (!ct.includes('json')) throw new Error(`${res.status}: unexpected non-JSON response`)
+  return res.json()
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { headers: await authHeaders() })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-  return res.json()
+  return parseJson<T>(res)
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers: await authHeaders(), body: JSON.stringify(body) })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-  return res.json()
+  return parseJson<T>(res)
 }
 
 async function put<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { method: 'PUT', headers: await authHeaders(), body: JSON.stringify(body) })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-  return res.json()
+  return parseJson<T>(res)
 }
 
 async function del(path: string): Promise<void> {
