@@ -7,23 +7,11 @@ from ..database import get_db
 from ..models import Contact, Interaction, LifeEvent
 from ..schemas import OverdueContact, UpcomingEvent
 from ..auth import get_current_user
+from ..utils import next_annual_occurrence
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 UPCOMING_DAYS = 30
-
-
-def _next_annual_occurrence(event_date: date, today: date) -> date:
-    try:
-        candidate = event_date.replace(year=today.year)
-    except ValueError:
-        candidate = event_date.replace(year=today.year, day=28)
-    if candidate < today:
-        try:
-            candidate = event_date.replace(year=today.year + 1)
-        except ValueError:
-            candidate = event_date.replace(year=today.year + 1, day=28)
-    return candidate
 
 
 @router.get("/overdue", response_model=list[OverdueContact])
@@ -100,7 +88,7 @@ async def upcoming_events(
     for contact in contacts:
         if not contact.birthday:
             continue
-        next_bday = _next_annual_occurrence(contact.birthday, today)
+        next_bday = next_annual_occurrence(contact.birthday, today)
         if today <= next_bday <= window_end:
             upcoming.append(UpcomingEvent(
                 contact_id=contact.id,
@@ -115,7 +103,7 @@ async def upcoming_events(
     # life events
     for event in life_events:
         if event.is_recurring:
-            next_date = _next_annual_occurrence(event.event_date, today)
+            next_date = next_annual_occurrence(event.event_date, today)
         else:
             next_date = event.event_date
 

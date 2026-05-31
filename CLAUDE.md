@@ -41,6 +41,22 @@ git push   # Vercel auto-deploys frontend; Railway auto-deploys backend
 - Railway has the production copy of all backend env vars
 - Vercel has: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL
 
+## Running tests
+```bash
+# Prereq: local Postgres must be running
+brew services start postgresql@16
+
+cd backend
+source .venv/bin/activate
+pytest tests/ -v           # full suite (48 tests + 4 skipped)
+pytest tests/test_utils.py tests/test_schemas.py -v  # unit tests only (no DB needed)
+```
+
+Test DB is `keepcontact_test` on localhost:5432. Create it once with `createdb keepcontact_test`.
+Schema is created/dropped automatically by the test suite — no manual migrations needed.
+
+See `.claude/test-design.md` for the full scenario list and design decisions.
+
 ## Database migrations
 ```bash
 cd backend

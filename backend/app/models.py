@@ -1,5 +1,9 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 from sqlalchemy import String, Text, Boolean, Integer, Date, DateTime, ForeignKey, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -27,8 +31,8 @@ class Contact(Base):
     photo_url: Mapped[str | None] = mapped_column(String(500))
     check_in_frequency_days: Mapped[int | None] = mapped_column(Integer)
     linked_profile_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     interactions: Mapped[list["Interaction"]] = relationship(back_populates="contact", cascade="all, delete-orphan")
     life_events: Mapped[list["LifeEvent"]] = relationship(back_populates="contact", cascade="all, delete-orphan")
@@ -51,8 +55,8 @@ class UserProfile(Base):
     phone: Mapped[str | None] = mapped_column(String(50))
     email: Mapped[str | None] = mapped_column(String(255))
     photo_url: Mapped[str | None] = mapped_column(String(500))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class Interaction(Base):
@@ -65,7 +69,7 @@ class Interaction(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     group_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     group_participant_names: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     contact: Mapped["Contact"] = relationship(back_populates="interactions")
 
@@ -84,7 +88,7 @@ class LifeEvent(Base):
     reminder_days_after: Mapped[int | None] = mapped_column(Integer)
     group_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     group_participant_names: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     contact: Mapped["Contact"] = relationship(back_populates="life_events")
     reminders: Mapped[list["Reminder"]] = relationship(back_populates="life_event", cascade="all, delete-orphan")
@@ -97,7 +101,7 @@ class UserSettings(Base):
     email_reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     sms_reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     sms_phone: Mapped[str | None] = mapped_column(String(50))  # user's own phone for receiving texts
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class Reminder(Base):
@@ -110,7 +114,7 @@ class Reminder(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     trigger_date: Mapped[date] = mapped_column(Date, nullable=False)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     contact: Mapped["Contact"] = relationship(back_populates="reminders")
     life_event: Mapped["LifeEvent | None"] = relationship(back_populates="reminders")

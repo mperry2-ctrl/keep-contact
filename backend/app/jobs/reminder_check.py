@@ -6,23 +6,11 @@ from sqlalchemy import select, func
 from ..database import async_session_factory
 from ..models import Contact, Interaction, LifeEvent, UserSettings
 from ..config import settings
+from ..utils import next_annual_occurrence
 
 log = logging.getLogger(__name__)
 
 UPCOMING_DAYS = 3
-
-
-def _next_annual_occurrence(event_date: date, today: date) -> date:
-    try:
-        candidate = event_date.replace(year=today.year)
-    except ValueError:
-        candidate = event_date.replace(year=today.year, day=28)
-    if candidate < today:
-        try:
-            candidate = event_date.replace(year=today.year + 1)
-        except ValueError:
-            candidate = event_date.replace(year=today.year + 1, day=28)
-    return candidate
 
 
 async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
@@ -71,12 +59,12 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
     for contact in contacts:
         if not contact.birthday:
             continue
-        next_bday = _next_annual_occurrence(contact.birthday, today)
+        next_bday = next_annual_occurrence(contact.birthday, today)
         if today <= next_bday <= window_end:
             upcoming.append({"name": contact.name, "title": "Birthday", "event_date": next_bday, "days_until": (next_bday - today).days})
 
     for event in life_events:
-        next_date = _next_annual_occurrence(event.event_date, today) if event.is_recurring else event.event_date
+        next_date = next_annual_occurrence(event.event_date, today) if event.is_recurring else event.event_date
         if today <= next_date <= window_end:
             upcoming.append({
                 "name": contact_map.get(event.contact_id, ""),

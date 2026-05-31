@@ -1,0 +1,15 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+env = [
+    "DATABASE_URL=postgresql+asyncpg://postgres:test@localhost:5432/keepcontact_test",
+    "SUPABASE_URL=http://localhost",
+    "SUPABASE_JWT_SECRET=test-secret",
+    "SUPABASE_SERVICE_ROLE_KEY=test-key",
+    "SUPABASE_ANON_KEY=test-anon-key",
+    "RESEND_API_KEY=test",
+    "FROM_EMAIL=test@test.com",
+    "TWILIO_ACCOUNT_SID=test",
+    "TWILIO_AUTH_TOKEN=test",
+    "TWILIO_FROM_NUMBER=+10000000000",
+    "FRONTEND_URL=http://localhost:5173",
+]

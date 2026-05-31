@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -42,7 +42,7 @@ async def update_settings(
 
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(settings, key, value)
-    settings.updated_at = datetime.utcnow()
+    settings.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     await db.commit()
     await db.refresh(settings)
     return settings
