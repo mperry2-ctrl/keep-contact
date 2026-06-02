@@ -31,6 +31,15 @@ function Nav() {
   )
 }
 
+function Footer() {
+  return (
+    <footer style={{ borderTop: '1px solid #eee', padding: '1rem 2rem', marginTop: '3rem', fontSize: '0.8rem', color: '#999', display: 'flex', gap: '1rem' }}>
+      <Link to="/terms" style={{ color: '#999' }}>Terms of Service</Link>
+      <Link to="/privacy" style={{ color: '#999' }}>Privacy Policy</Link>
+    </footer>
+  )
+}
+
 function ProtectedLayout({ session, children }: { session: Session | null; children: React.ReactNode }) {
   if (!session) return <Navigate to="/login" replace />
   return <>{children}</>
@@ -67,6 +76,7 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
       </Routes>
+      <Footer />
     </BrowserRouter>
   )
 }
