@@ -4,6 +4,8 @@ export interface UserSettings {
   email_reminders_enabled: boolean
   sms_reminders_enabled: boolean
   sms_phone: string | null
+  reminder_hour: number
+  timezone: string
 }
 
 export const settingsApi = {

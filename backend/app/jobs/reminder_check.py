@@ -1,6 +1,8 @@
 import asyncio
 import logging
 from datetime import date, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from ..database import async_session_factory
@@ -10,11 +12,21 @@ from ..utils import next_annual_occurrence
 
 log = logging.getLogger(__name__)
 
-UPCOMING_DAYS = 3
+UPCOMING_DAYS = 7
+
+
+def _user_hour_matches(user_settings: UserSettings, now: datetime | None = None) -> bool:
+    """Return True if the current hour in the user's timezone matches their reminder_hour."""
+    try:
+        tz = ZoneInfo(user_settings.timezone)
+    except (ZoneInfoNotFoundError, Exception):
+        tz = ZoneInfo("America/New_York")
+    local_now = now.astimezone(tz) if now is not None else datetime.now(tz)
+    return local_now.hour == user_settings.reminder_hour
 
 
 async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
-    """Returns {'overdue': [...], 'upcoming': [...]} for a user."""
+    """Returns {'overdue': [...], 'upcoming': [...]} for a user, excluding sms_opt_out contacts."""
     window_end = today + timedelta(days=UPCOMING_DAYS)
 
     last_interaction_sq = (
@@ -26,7 +38,11 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
     rows = (await db.execute(
         select(Contact, last_interaction_sq.c.last_date)
         .outerjoin(last_interaction_sq, Contact.id == last_interaction_sq.c.contact_id)
-        .where(Contact.user_id == user_id, Contact.check_in_frequency_days.isnot(None))
+        .where(
+            Contact.user_id == user_id,
+            Contact.check_in_frequency_days.isnot(None),
+            Contact.sms_opt_out.is_(False),
+        )
     )).all()
 
     overdue = []
@@ -41,7 +57,10 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
     overdue.sort(key=lambda c: c["days_overdue"], reverse=True)
 
     contacts = (await db.execute(
-        select(Contact).where(Contact.user_id == user_id)
+        select(Contact).where(
+            Contact.user_id == user_id,
+            Contact.sms_opt_out.is_(False),
+        )
     )).scalars().all()
 
     contact_map = {c.id: c.name for c in contacts}
@@ -61,7 +80,12 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
             continue
         next_bday = next_annual_occurrence(contact.birthday, today)
         if today <= next_bday <= window_end:
-            upcoming.append({"name": contact.name, "title": "Birthday", "event_date": next_bday, "days_until": (next_bday - today).days})
+            upcoming.append({
+                "name": contact.name,
+                "title": "Birthday",
+                "event_date": next_bday,
+                "days_until": (next_bday - today).days,
+            })
 
     for event in life_events:
         next_date = next_annual_occurrence(event.event_date, today) if event.is_recurring else event.event_date
@@ -75,27 +99,6 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
 
     upcoming.sort(key=lambda e: e["event_date"])
     return {"overdue": overdue, "upcoming": upcoming}
-
-
-def _format_email_html(overdue: list, upcoming: list, today: date) -> str:
-    lines = [f"<h2>Keep Contact — {today.strftime('%B %d, %Y')}</h2>"]
-
-    if overdue:
-        lines.append("<h3>Reach out</h3><ul>")
-        for c in overdue:
-            days = c["days_overdue"]
-            label = f"{days} day{'s' if days != 1 else ''} overdue"
-            lines.append(f"<li><strong>{c['name']}</strong> — {label}</li>")
-        lines.append("</ul>")
-
-    if upcoming:
-        lines.append("<h3>Coming up (next 3 days)</h3><ul>")
-        for e in upcoming:
-            when = "today" if e["days_until"] == 0 else ("tomorrow" if e["days_until"] == 1 else f"in {e['days_until']} days")
-            lines.append(f"<li><strong>{e['name']}</strong> — {e['title']} ({when})</li>")
-        lines.append("</ul>")
-
-    return "\n".join(lines)
 
 
 def _format_sms(overdue: list, upcoming: list) -> str:
@@ -112,62 +115,27 @@ def _format_sms(overdue: list, upcoming: list) -> str:
 
 
 async def run_reminder_check():
-    log.info("Running daily reminder check")
+    """Runs every hour; sends SMS digest only to users whose local hour matches their reminder_hour."""
+    log.info("Running hourly reminder check")
     today = date.today()
 
     async with async_session_factory() as db:
         all_settings = (await db.execute(select(UserSettings))).scalars().all()
 
         for user_settings in all_settings:
-            if not user_settings.email_reminders_enabled and not user_settings.sms_reminders_enabled:
+            if not user_settings.sms_reminders_enabled or not user_settings.sms_phone:
+                continue
+
+            if not _user_hour_matches(user_settings, now=None):
                 continue
 
             digest = await _build_digest(db, user_settings.user_id, today)
             if not digest["overdue"] and not digest["upcoming"]:
                 continue
 
-            user_email = await _get_user_email(user_settings.user_id)
-
-            if user_settings.email_reminders_enabled and user_email:
-                await _send_email(user_email, digest["overdue"], digest["upcoming"], today)
-
-            if user_settings.sms_reminders_enabled and user_settings.sms_phone:
-                await _send_sms(user_settings.sms_phone, digest["overdue"], digest["upcoming"])
+            await _send_sms(user_settings.sms_phone, digest["overdue"], digest["upcoming"])
 
     log.info("Reminder check complete")
-
-
-async def _get_user_email(user_id) -> str | None:
-    import httpx
-    from ..config import settings as cfg
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                f"{cfg.supabase_url}/auth/v1/admin/users/{user_id}",
-                headers={"apikey": cfg.supabase_service_role_key, "Authorization": f"Bearer {cfg.supabase_service_role_key}"},
-                timeout=10,
-            )
-            resp.raise_for_status()
-            return resp.json().get("email")
-    except Exception as e:
-        log.error(f"Failed to fetch email for user {user_id}: {e}")
-        return None
-
-
-async def _send_email(to_email: str, overdue: list, upcoming: list, today: date):
-    import resend
-    resend.api_key = settings.resend_api_key
-    try:
-        html = _format_email_html(overdue, upcoming, today)
-        resend.Emails.send({
-            "from": settings.from_email,
-            "to": to_email,
-            "subject": f"Keep Contact — {today.strftime('%b %d')} reminders",
-            "html": html,
-        })
-        log.info(f"Reminder email sent to {to_email}")
-    except Exception as e:
-        log.error(f"Failed to send email to {to_email}: {e}")
 
 
 async def _send_sms(to_phone: str, overdue: list, upcoming: list):

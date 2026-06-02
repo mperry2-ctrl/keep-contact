@@ -166,6 +166,11 @@ export default function ContactDetail() {
         {contact.tags && contact.tags.length > 0 && (
           <Row label="Tags" value={contact.tags.join(', ')} />
         )}
+        {contact.sms_opt_out && (
+          <div style={{ marginBottom: 8, fontSize: '0.875rem', color: '#6b7280' }}>
+            SMS reminders disabled for this contact
+          </div>
+        )}
       </section>
 
       {contact.general_notes && (

@@ -21,6 +21,7 @@ class ContactCreate(BaseModel):
     tags: Optional[list[str]] = None
     general_notes: Optional[str] = None
     check_in_frequency_days: Optional[int] = None
+    sms_opt_out: Optional[bool] = None
 
 
 class ContactUpdate(BaseModel):
@@ -38,6 +39,7 @@ class ContactUpdate(BaseModel):
     tags: Optional[list[str]] = None
     general_notes: Optional[str] = None
     check_in_frequency_days: Optional[int] = None
+    sms_opt_out: Optional[bool] = None
 
 
 class ContactResponse(BaseModel):
@@ -58,6 +60,7 @@ class ContactResponse(BaseModel):
     general_notes: Optional[str] = None
     photo_url: Optional[str] = None
     check_in_frequency_days: Optional[int] = None
+    sms_opt_out: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -128,12 +131,16 @@ class UserSettingsUpdate(BaseModel):
     email_reminders_enabled: Optional[bool] = None
     sms_reminders_enabled: Optional[bool] = None
     sms_phone: Optional[str] = None
+    reminder_hour: Optional[int] = None
+    timezone: Optional[str] = None
 
 
 class UserSettingsResponse(BaseModel):
     email_reminders_enabled: bool
     sms_reminders_enabled: bool
     sms_phone: Optional[str] = None
+    reminder_hour: int = 8
+    timezone: str = "America/New_York"
 
     model_config = {"from_attributes": True}
 

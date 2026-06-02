@@ -33,7 +33,7 @@ export default function ContactForm() {
   const navigate = useNavigate()
   const isEdit = Boolean(id)
 
-  const [form, setForm] = useState<ContactPayload>({ name: '' })
+  const [form, setForm] = useState<ContactPayload>({ name: '', sms_opt_out: false })
   const [phone, setPhone] = useState<PhoneValue | undefined>(undefined)
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [tagsInput, setTagsInput] = useState('')
@@ -59,6 +59,7 @@ export default function ContactForm() {
         tags: contact.tags,
         general_notes: contact.general_notes,
         check_in_frequency_days: contact.check_in_frequency_days,
+        sms_opt_out: contact.sms_opt_out,
       })
       setPhone((contact.phone as PhoneValue) ?? undefined)
       setTagsInput(contact.tags?.join(', ') ?? '')
@@ -204,6 +205,20 @@ export default function ContactForm() {
         <div style={fieldWrap}>
           <label style={label}>Notes</label>
           <textarea style={{ height: 120 }} value={form.general_notes ?? ''} onChange={set('general_notes')} />
+        </div>
+
+        <div style={fieldWrap}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={form.sms_opt_out ?? false}
+              onChange={e => setForm(f => ({ ...f, sms_opt_out: e.target.checked }))}
+            />
+            <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Exclude from SMS reminders</span>
+          </label>
+          <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: 4, marginLeft: 24 }}>
+            This contact won't appear in your daily text digest.
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>

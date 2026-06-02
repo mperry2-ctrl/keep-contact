@@ -31,6 +31,7 @@ class Contact(Base):
     photo_url: Mapped[str | None] = mapped_column(String(500))
     check_in_frequency_days: Mapped[int | None] = mapped_column(Integer)
     linked_profile_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    sms_opt_out: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -100,7 +101,9 @@ class UserSettings(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     email_reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     sms_reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
-    sms_phone: Mapped[str | None] = mapped_column(String(50))  # user's own phone for receiving texts
+    sms_phone: Mapped[str | None] = mapped_column(String(50))
+    reminder_hour: Mapped[int] = mapped_column(Integer, default=8)
+    timezone: Mapped[str] = mapped_column(String(50), default="America/New_York")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 

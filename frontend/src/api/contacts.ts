@@ -18,6 +18,7 @@ export interface Contact {
   general_notes: string | null
   photo_url: string | null
   check_in_frequency_days: number | null
+  sms_opt_out: boolean
   created_at: string
   updated_at: string
 }
@@ -37,6 +38,7 @@ export interface ContactPayload {
   tags?: string[] | null
   general_notes?: string | null
   check_in_frequency_days?: number | null
+  sms_opt_out?: boolean | null
 }
 
 export const contactsApi = {

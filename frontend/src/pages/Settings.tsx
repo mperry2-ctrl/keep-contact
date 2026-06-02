@@ -3,6 +3,26 @@ import { settingsApi, type UserSettings } from '../api/settings'
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const ampm = i < 12 ? 'AM' : 'PM'
+  const h = i % 12 === 0 ? 12 : i % 12
+  return { value: i, label: `${h}:00 ${ampm}` }
+})
+
+const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern (ET)' },
+  { value: 'America/Chicago', label: 'Central (CT)' },
+  { value: 'America/Denver', label: 'Mountain (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific (PT)' },
+  { value: 'America/Anchorage', label: 'Alaska (AKT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii (HT)' },
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Paris', label: 'Central Europe (CET)' },
+  { value: 'Asia/Tokyo', label: 'Japan (JST)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+  { value: 'UTC', label: 'UTC' },
+]
+
 export default function Settings() {
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [smsPhone, setSmsPhone] = useState<string | undefined>(undefined)
@@ -43,6 +63,13 @@ export default function Settings() {
     }
   }
 
+  const handleReminderTime = async (field: 'reminder_hour' | 'timezone', value: string | number) => {
+    if (!settings) return
+    const updated = { ...settings, [field]: value }
+    setSettings(updated)
+    await settingsApi.update({ [field]: value })
+  }
+
   if (!settings) return <div style={{ padding: '2rem' }}>Loading…</div>
 
   return (
@@ -52,17 +79,8 @@ export default function Settings() {
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Daily reminders</h2>
         <p style={{ color: '#555', marginBottom: '1.25rem', fontSize: '0.9rem' }}>
-          A daily digest is sent each morning summarising overdue check-ins and life events coming up in the next 3 days.
+          A daily digest is sent summarising overdue check-ins and life events coming up in the next 7 days.
         </p>
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={settings.email_reminders_enabled}
-            onChange={() => handleToggle('email_reminders_enabled')}
-          />
-          <span>Email reminders</span>
-        </label>
 
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', cursor: 'pointer' }}>
           <input
@@ -75,21 +93,52 @@ export default function Settings() {
 
         {settings.sms_reminders_enabled && (
           <div style={{ marginTop: '0.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-              Your phone number for texts
-            </label>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-              <PhoneInput
-                defaultCountry="US"
-                value={smsPhone}
-                onChange={val => setSmsPhone(val)}
-                style={{ flex: 1 }}
-              />
-              <button onClick={handleSavePhone} disabled={saving}>
-                {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
-              </button>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                Your phone number for texts
+              </label>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <PhoneInput
+                  defaultCountry="US"
+                  value={smsPhone}
+                  onChange={val => setSmsPhone(val)}
+                  style={{ flex: 1 }}
+                />
+                <button onClick={handleSavePhone} disabled={saving}>
+                  {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
+                </button>
+              </div>
+              {error && <p style={{ color: '#dc2626', marginTop: '0.5rem', fontSize: '0.875rem' }}>{error}</p>}
             </div>
-            {error && <p style={{ color: '#dc2626', marginTop: '0.5rem', fontSize: '0.875rem' }}>{error}</p>}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>
+                  Delivery time
+                </label>
+                <select
+                  value={settings.reminder_hour}
+                  onChange={e => handleReminderTime('reminder_hour', parseInt(e.target.value))}
+                >
+                  {HOUR_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>
+                  Timezone
+                </label>
+                <select
+                  value={settings.timezone}
+                  onChange={e => handleReminderTime('timezone', e.target.value)}
+                >
+                  {TIMEZONES.map(tz => (
+                    <option key={tz.value} value={tz.value}>{tz.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         )}
       </section>

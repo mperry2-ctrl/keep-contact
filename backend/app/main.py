@@ -12,7 +12,7 @@ scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler.add_job(run_reminder_check, "cron", hour=8, minute=0, id="daily_reminders")
+    scheduler.add_job(run_reminder_check, "interval", hours=1, id="hourly_reminders")
     scheduler.start()
     yield
     scheduler.shutdown()
