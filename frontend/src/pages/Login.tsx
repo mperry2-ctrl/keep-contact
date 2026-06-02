@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function Login() {
@@ -63,6 +64,11 @@ export default function Login() {
         <button type="button" onClick={() => setIsSignUp(!isSignUp)}>
           {isSignUp ? 'Sign in' : 'Sign up'}
         </button>
+      </p>
+      <p style={{ marginTop: '2rem', fontSize: '0.8rem', color: '#999' }}>
+        <Link to="/terms" style={{ color: '#999' }}>Terms of Service</Link>
+        {' · '}
+        <Link to="/privacy" style={{ color: '#999' }}>Privacy Policy</Link>
       </p>
     </div>
   )

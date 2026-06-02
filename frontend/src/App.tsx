@@ -10,6 +10,8 @@ import ContactForm from './pages/ContactForm'
 import Settings from './pages/Settings'
 import ImportContacts from './pages/ImportContacts'
 import Profile from './pages/Profile'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 
 function Nav() {
   const loc = useLocation()
@@ -62,6 +64,8 @@ export default function App() {
         <Route path="/import" element={<ProtectedLayout session={session}><ImportContacts /></ProtectedLayout>} />
         <Route path="/profile" element={<ProtectedLayout session={session}><Profile /></ProtectedLayout>} />
         <Route path="/settings" element={<ProtectedLayout session={session}><Settings /></ProtectedLayout>} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
       </Routes>
     </BrowserRouter>
   )
