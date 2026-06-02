@@ -41,6 +41,13 @@ git push   # Vercel auto-deploys frontend; Railway auto-deploys backend
 - Railway has the production copy of all backend env vars
 - Vercel has: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL
 
+## Testing requirement
+After any backend feature, bug fix, or refactor — run the test suite before considering the task done:
+```bash
+cd backend && source .venv/bin/activate && pytest tests/ -v
+```
+If tests fail, fix them before moving on. If new behavior isn't covered by existing tests, add tests for it. Skip this only for changes that are purely cosmetic (comments, docs, formatting) or frontend-only.
+
 ## Running tests
 ```bash
 # Prereq: local Postgres must be running
