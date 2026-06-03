@@ -84,6 +84,7 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
             upcoming.append({
                 "name": contact.name,
                 "title": "Birthday",
+                "event_type": "birthday",
                 "event_date": next_bday,
                 "days_until": (next_bday - today).days,
             })
@@ -94,6 +95,7 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
             upcoming.append({
                 "name": contact_map.get(event.contact_id, ""),
                 "title": event.title,
+                "event_type": event.event_type,
                 "event_date": next_date,
                 "days_until": (next_date - today).days,
             })
@@ -102,17 +104,42 @@ async def _build_digest(db: AsyncSession, user_id, today: date) -> dict:
     return {"overdue": overdue, "upcoming": upcoming}
 
 
+_EMOJI = {
+    "birthday": "🎂",
+    "trip": "✈️",
+    "milestone": "🏆",
+    "meeting": "📅",
+    "other": "📌",
+}
+
+
+def _format_upcoming_line(item: dict) -> str:
+    event_type = item.get("event_type", "other")
+    emoji = _EMOJI.get(event_type, "📌")
+    name = item["name"]
+    days = item["days_until"]
+    if event_type == "birthday":
+        if days == 0:
+            return f"{emoji} Today is {name}'s birthday."
+        if days == 1:
+            return f"{emoji} {name}'s birthday is tomorrow."
+        return f"{emoji} {name}'s birthday is in {days} days."
+    title = item["title"]
+    when = "today" if days == 0 else ("tomorrow" if days == 1 else f"in {days} days")
+    return f"{emoji} {name}: {title} — {when}."
+
+
 def _format_sms(overdue: list, upcoming: list) -> str:
-    parts = []
-    if overdue:
-        names = ", ".join(c["name"] for c in overdue[:3])
-        suffix = f" +{len(overdue) - 3} more" if len(overdue) > 3 else ""
-        parts.append(f"{len(overdue)} overdue: {names}{suffix}")
-    if upcoming:
-        names = ", ".join(f"{e['name']} ({e['title']})" for e in upcoming[:2])
-        suffix = f" +{len(upcoming) - 2} more" if len(upcoming) > 2 else ""
-        parts.append(f"Coming up: {names}{suffix}")
-    return "Keep Contact: " + " | ".join(parts) + ". Reply STOP to opt out."
+    lines = ["KeepContact - Daily Digest:"]
+    for item in upcoming[:3]:
+        lines.append(_format_upcoming_line(item))
+    for item in overdue[:3]:
+        lines.append(f"📲 You and {item['name']} are {item['days_overdue']} days overdue for a check-in.")
+    extra = max(0, len(upcoming) - 3) + max(0, len(overdue) - 3)
+    if extra:
+        lines.append(f"+{extra} more.")
+    lines.append("\nReply STOP to opt out.")
+    return "\n".join(lines)
 
 
 async def run_reminder_check():

@@ -86,11 +86,11 @@ def test_U13_format_sms_upcoming_only():
 
 def test_U14_format_sms_combined():
     overdue = [{"name": "Alice", "days_overdue": 5}]
-    upcoming = [{"name": "Bob", "title": "Birthday", "event_date": date(2026, 6, 5), "days_until": 4}]
+    upcoming = [{"name": "Bob", "title": "Birthday", "event_type": "birthday", "event_date": date(2026, 6, 5), "days_until": 4}]
     msg = _format_sms(overdue, upcoming)
     assert "Alice" in msg
     assert "Bob" in msg
-    assert "|" in msg
+    assert "Daily Digest" in msg
 
 
 def test_U15_format_sms_truncates_overdue_at_three():
@@ -99,18 +99,18 @@ def test_U15_format_sms_truncates_overdue_at_three():
     assert "+2 more" in msg
 
 
-def test_U16_format_sms_truncates_upcoming_at_two():
+def test_U16_format_sms_truncates_upcoming_at_three():
     upcoming = [
         {"name": f"Person{i}", "title": "Birthday", "event_date": date(2026, 6, i + 1), "days_until": i}
-        for i in range(4)
+        for i in range(5)
     ]
     msg = _format_sms([], upcoming)
     assert "+2 more" in msg
 
 
-def test_U17_format_sms_starts_with_keep_contact():
+def test_U17_format_sms_starts_with_keepcontact_header():
     overdue = [{"name": "Alice", "days_overdue": 1}]
-    assert _format_sms(overdue, []).startswith("Keep Contact:")
+    assert _format_sms(overdue, []).startswith("KeepContact - Daily Digest:")
 
 
 # ---------------------------------------------------------------------------
