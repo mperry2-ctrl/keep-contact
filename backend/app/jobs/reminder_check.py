@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from datetime import date, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from datetime import datetime, timezone
@@ -116,6 +117,9 @@ def _format_sms(overdue: list, upcoming: list) -> str:
 
 async def run_reminder_check():
     """Runs every hour; sends SMS digest only to users whose local hour matches their reminder_hour."""
+    if os.getenv("SMS_ENABLED", "true").lower() != "true":
+        log.info("SMS_ENABLED is off — skipping reminder check")
+        return
     log.info("Running hourly reminder check")
     today = date.today()
 
