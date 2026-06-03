@@ -109,6 +109,9 @@ export default function Settings() {
                 </button>
               </div>
               {error && <p style={{ color: '#dc2626', marginTop: '0.5rem', fontSize: '0.875rem' }}>{error}</p>}
+              <p style={{ color: '#888', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                By saving your number you consent to receive periodic SMS reminders from Keep Contact. Message frequency varies. Reply STOP to unsubscribe, HELP for help. Msg &amp; Data rates may apply.
+              </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>

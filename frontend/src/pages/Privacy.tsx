@@ -93,13 +93,23 @@ export default function Privacy() {
       <h2 style={s.h2}>9. Children's Privacy</h2>
       <p style={s.p}>The Service is not intended for users under 18 years old. We do not knowingly collect personal information from anyone under 18. If we learn that we have collected information from a minor, we will delete it promptly.</p>
 
-      <h2 style={s.h2}>10. Geographic Scope</h2>
+      <h2 style={s.h2}>10. SMS Program</h2>
+      <p style={s.p}>Keep Contact operates an SMS reminder program. By enabling SMS reminders in Settings and saving your mobile number, you consent to receive periodic text message digests summarizing overdue check-ins and upcoming events for your contacts.</p>
+      <ul style={s.ul}>
+        <li><strong>Message frequency:</strong> Varies; typically one message per day when reminders are enabled.</li>
+        <li><strong>To opt out:</strong> Reply STOP to any message, or disable SMS reminders in Settings. You will receive a confirmation and no further messages.</li>
+        <li><strong>For help:</strong> Reply HELP for information.</li>
+        <li><strong>Msg &amp; Data rates may apply.</strong></li>
+      </ul>
+      <p style={s.p}>Your mobile number is used solely to deliver reminder messages and is never sold or shared with third parties.</p>
+
+      <h2 style={s.h2}>11. Geographic Scope</h2>
       <p style={s.p}>Keep Contact is intended for users in the United States. If you are located outside the United States, please do not use the Service.</p>
 
-      <h2 style={s.h2}>11. Changes to This Policy</h2>
+      <h2 style={s.h2}>12. Changes to This Policy</h2>
       <p style={s.p}>We may update this Privacy Policy from time to time. Material changes will be communicated by email or in-app notice at least 30 days before taking effect. Continued use of the Service after the effective date constitutes acceptance of the updated policy.</p>
 
-      <h2 style={s.h2}>12. Contact</h2>
+      <h2 style={s.h2}>13. Contact</h2>
       <p style={s.p}>Privacy questions, data access requests, or deletion requests:</p>
       <p style={s.p}><a href="mailto:keepcontactnotifications@gmail.com">keepcontactnotifications@gmail.com</a></p>
     </div>

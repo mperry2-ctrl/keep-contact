@@ -112,7 +112,7 @@ def _format_sms(overdue: list, upcoming: list) -> str:
         names = ", ".join(f"{e['name']} ({e['title']})" for e in upcoming[:2])
         suffix = f" +{len(upcoming) - 2} more" if len(upcoming) > 2 else ""
         parts.append(f"Coming up: {names}{suffix}")
-    return "Keep Contact: " + " | ".join(parts)
+    return "Keep Contact: " + " | ".join(parts) + ". Reply STOP to opt out."
 
 
 async def run_reminder_check():
