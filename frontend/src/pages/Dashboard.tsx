@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { dashboardApi, type OverdueContact, type UpcomingEvent } from '../api/dashboard'
 import { logApi } from '../api/log'
+import { todosApi, type Todo, CATEGORY_EMOJI } from '../api/todos'
 import type { Contact } from '../api/contacts'
 import type { EventType } from '../api/life_events'
 import ContactPicker from '../components/ContactPicker'
@@ -213,12 +214,18 @@ const labelStyle: React.CSSProperties = {
 export default function Dashboard() {
   const [overdue, setOverdue] = useState<OverdueContact[]>([])
   const [upcoming, setUpcoming] = useState<UpcomingEvent[]>([])
+  const [todos, setTodos] = useState<Todo[]>([])
   const [loading, setLoading] = useState(true)
   const [showLogModal, setShowLogModal] = useState(false)
 
   function loadData() {
-    return Promise.all([dashboardApi.overdue(), dashboardApi.upcoming()])
-      .then(([o, u]) => { setOverdue(o); setUpcoming(u) })
+    return Promise.all([dashboardApi.overdue(), dashboardApi.upcoming(), todosApi.list()])
+      .then(([o, u, t]) => { setOverdue(o); setUpcoming(u); setTodos(t.filter(t => !t.completed_at)) })
+  }
+
+  const handleCompleteTodo = async (id: string) => {
+    await todosApi.complete(id)
+    setTodos(prev => prev.filter(t => t.id !== id))
   }
 
   useEffect(() => {
@@ -274,7 +281,7 @@ export default function Dashboard() {
         }
       </section>
 
-      <section>
+      <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ marginBottom: '1rem' }}>
           Coming up
           <span style={{ marginLeft: 8, fontSize: '0.875rem', fontWeight: 400, color: '#888' }}>next 30 days</span>
@@ -297,6 +304,37 @@ export default function Dashboard() {
                     {daysUntilLabel(ev.days_until)}
                     <span style={{ color: '#888', marginLeft: 6 }}>{ev.event_date}</span>
                   </span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </section>
+
+      <section>
+        <h2 style={{ marginBottom: '1rem' }}>
+          To-Do
+          {todos.length > 0 && <span style={{ marginLeft: 8, fontSize: '0.875rem', fontWeight: 400, color: '#888' }}>{todos.length} open</span>}
+        </h2>
+        {todos.length === 0
+          ? <p style={{ color: '#888' }}>No open to-dos. <Link to="/todos">Add one →</Link></p>
+          : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {todos.map(todo => (
+                <li key={todo.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0', borderBottom: '1px solid #e5e7eb' }}>
+                  <input
+                    type="checkbox"
+                    checked={false}
+                    onChange={() => handleCompleteTodo(todo.id)}
+                    style={{ flexShrink: 0, cursor: 'pointer' }}
+                  />
+                  <span style={{ flex: 1 }}>
+                    {CATEGORY_EMOJI[todo.category]} {todo.description}
+                  </span>
+                  {todo.due_date && (
+                    <span style={{ fontSize: '0.8rem', color: '#888' }}>Due {todo.due_date}</span>
+                  )}
+                  <Link to="/todos" style={{ fontSize: '0.8rem', color: '#888' }}>Edit</Link>
                 </li>
               ))}
             </ul>

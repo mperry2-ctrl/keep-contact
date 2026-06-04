@@ -12,6 +12,7 @@ import ImportContacts from './pages/ImportContacts'
 import Profile from './pages/Profile'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
+import Todos from './pages/Todos'
 
 function Nav() {
   const loc = useLocation()
@@ -25,6 +26,7 @@ function Nav() {
       <Link to="/" style={linkStyle('/')}>Home</Link>
       <Link to="/contacts" style={linkStyle('/contacts')}>Contacts</Link>
       <Link to="/import" style={linkStyle('/import')}>Import</Link>
+      <Link to="/todos" style={linkStyle('/todos')}>To-Do</Link>
       <Link to="/profile" style={linkStyle('/profile')}>My Profile</Link>
       <Link to="/settings" style={{ ...linkStyle('/settings'), marginLeft: 'auto' }}>Settings</Link>
     </nav>
@@ -73,6 +75,7 @@ export default function App() {
         <Route path="/import" element={<ProtectedLayout session={session}><ImportContacts /></ProtectedLayout>} />
         <Route path="/profile" element={<ProtectedLayout session={session}><Profile /></ProtectedLayout>} />
         <Route path="/settings" element={<ProtectedLayout session={session}><Settings /></ProtectedLayout>} />
+        <Route path="/todos" element={<ProtectedLayout session={session}><Todos /></ProtectedLayout>} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
       </Routes>

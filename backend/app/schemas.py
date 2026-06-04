@@ -252,3 +252,29 @@ class GroupEventCreate(BaseModel):
     notes: Optional[str] = None
     reminder_days_before: Optional[int] = None
     reminder_days_after: Optional[int] = None
+
+
+TodoCategory = Literal["priority", "need_to_do", "wishlist"]
+
+
+class TodoCreate(BaseModel):
+    description: str
+    category: TodoCategory = "need_to_do"
+    due_date: Optional[date] = None
+
+
+class TodoUpdate(BaseModel):
+    description: Optional[str] = None
+    category: Optional[TodoCategory] = None
+    due_date: Optional[date] = None
+
+
+class TodoResponse(BaseModel):
+    id: uuid.UUID
+    description: str
+    category: str
+    due_date: Optional[date] = None
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

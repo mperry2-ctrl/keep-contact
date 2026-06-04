@@ -121,3 +121,15 @@ class Reminder(Base):
 
     contact: Mapped["Contact"] = relationship(back_populates="reminders")
     life_event: Mapped["LifeEvent | None"] = relationship(back_populates="reminders")
+
+
+class Todo(Base):
+    __tablename__ = "todos"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    category: Mapped[str] = mapped_column(String(20), nullable=False, default="need_to_do")
+    due_date: Mapped[date | None] = mapped_column(Date)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
