@@ -39,6 +39,7 @@ git push   # Vercel auto-deploys frontend; Railway auto-deploys backend + runs a
 - Backend `.env` has all secrets — do NOT commit it
 - Railway has the production copy of all backend env vars
 - Vercel has: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL
+- `SMS_ENABLED=false` in Railway env disables the reminder job without a redeploy (kill switch)
 
 ## Testing requirement
 After any backend feature, bug fix, or refactor — run the test suite before considering the task done:
@@ -86,16 +87,19 @@ Current migrations: 0001 (schema) → 0002 (location) → 0003 (phone/postal) �
 4. Life events (trips, milestones, meetings per contact; group events)
 5. Dashboard (overdue check-ins + upcoming events in 30 days; quick-log modal)
 6. Search (filter by name, company, tags, notes)
-7. SMS reminders (APScheduler hourly, per-user timezone + delivery hour, per-contact opt-out, 7-day upcoming window)
-8. Contact import (vCard .vcf and CSV — LinkedIn/Google Contacts format)
-9. User profile (shareable public profile card at `/p/:slug`)
-10. Deploy (Railway + Vercel; Procfile runs migrations on deploy)
-11. Backend test suite (70 tests: unit + integration + Twilio smoke test)
+7. Contact import (vCard .vcf and CSV — LinkedIn/Google Contacts format)
+8. User profile (shareable public profile card at `/p/:slug`)
+9. SMS reminders (hourly scheduler, per-user timezone + delivery hour, per-contact opt-out, 7-day upcoming window, multiline emoji digest, STOP to unsubscribe)
+10. Todo list (priority/need_to_do/wishlist; included in SMS digest; reply "done 1 2 3" to complete via SMS; undo support)
+11. A2P 10DLC compliance (SMS consent disclosure on Settings page, STOP footer in every digest, Terms/Privacy pages)
+12. Deploy (Railway + Vercel; Procfile runs migrations on deploy)
+13. Backend test suite (70 tests: unit + integration + Twilio smoke test)
 
 ## SMS reminders — current status
-- **Code**: fully wired. Hourly scheduler checks each user's `reminder_hour` in their `timezone`, sends digest of overdue check-ins + events in next 7 days.
-- **Blocker**: A2P 10DLC registration pending with Twilio. Delivery will work once approved.
-- **Smoke test**: passes (Twilio accepts the request). Delivery blocked at carrier level until A2P clears.
+- **Code**: fully wired. Hourly scheduler checks each user's `reminder_hour` in their `timezone`, sends multiline emoji digest of overdue check-ins + upcoming events + todos.
+- **Blocker**: A2P 10DLC registration pending with Twilio (applied 2026-06-02). Delivery works once approved.
+- **Smoke test**: passes (Twilio accepts the request and returns a SID). Delivery blocked at carrier level until A2P clears.
+- **Kill switch**: set `SMS_ENABLED=false` in Railway env to disable the reminder job without a redeploy.
 - **Email**: deprioritized — Resend sandbox only allows sending to the signup email. Needs a verified domain; tackle when needed.
 
 ## Next steps (in priority order)
@@ -103,24 +107,41 @@ Current migrations: 0001 (schema) → 0002 (location) → 0003 (phone/postal) �
 ### 1. Contact categories
 Assign contacts to categories (Friends, Family, Work, etc.) with default check-in frequency per category. Per-contact frequency overrides the category default.
 - New table: `contact_categories` (user_id, name, default_check_in_days, color)
-- Foreign key on `contacts.category_id`
-- Settings page: manage categories and their defaults
+- FK on `contacts.category_id`
+- Settings page: manage categories + defaults
 - Contact form: category picker
 
-### 2. Map visualizer
-Show a world map with pins for where contacts are located.
-- Contacts already have city/state/country_code/postal_code fields
-- Option A: geocoding API (Google Maps, Mapbox) → lat/lng stored on contact
-- Option B: country_code only, choropleth map (simpler, no API key)
-- Recommended library: `react-simple-maps`
-- New page: `/map`
+### 2. Easy contact sharing (digital business card)
+Share your own contact info with someone new via a link or QR code.
+- Builds on existing `/p/:slug` shareable profile
+- Add vCard download from profile page
+- QR code generation for in-person sharing
 
-### 3. Analytics dashboard (admin)
-Usage metrics: signups, contacts created, interactions logged, active users.
-- Recommended: add PostHog — one script tag, gives sessions/clicks/funnels automatically
-- Install: `npm install posthog-js` in frontend
+### 3. Granola integration (meeting notes → interactions/life events)
+Take meeting notes in Granola and have them intelligently parsed into interactions and life events.
+- Research Granola's API/export format first
+- Backend: `POST /integrations/granola` — accept note payload, use Claude API to extract people, dates, topics, action items, return preview to confirm before saving
+- Frontend: confirm screen before committing parsed data
 
-### 4. GitHub Actions CI
+### 4. LinkedIn enrichment (no account linking)
+Populate career and location data for contacts from LinkedIn without requiring OAuth.
+- Best path: user pastes LinkedIn URL → Proxycurl / People Data Labs API lookup (paid, ~$0.01/lookup)
+- Fallback: parse LinkedIn data export CSV (already supported via CSV import flow)
+- Store enriched fields with a `linkedin_url` on Contact
+
+### 5. AI-powered nudges
+Use contact data, interaction history, life events, and notes to generate smart, contextual reminders in the SMS digest.
+- "Alice just got back from Japan — good time to check in"
+- "You haven't spoken to Bob in 3 months and his company just IPO'd"
+- Run Claude API at digest-build time; inject personalized nudge lines per contact
+
+### 6. Network graph + message data
+Parse message history (iMessage export, Gmail API) to map who knows whom and improve AI nudges.
+- Build contact network: shared interactions/events = edge weight
+- Message parsing surfaces big events and conversation topics automatically
+- Feeds stronger signal into item 5's nudge generation
+
+### 7. GitHub Actions CI
 Wire `pytest tests/ -v` to run on every push/PR.
 - Add `.github/workflows/test.yml`
 - Needs: postgres service container, same env vars as `pyproject.toml`
@@ -129,7 +150,7 @@ Wire `pytest tests/ -v` to run on every push/PR.
 ```
 backend/app/
   main.py              — FastAPI app, APScheduler wiring (hourly)
-  models.py            — SQLAlchemy models
+  models.py            — SQLAlchemy models (Contact, Interaction, LifeEvent, UserSettings, UserProfile, Todo)
   schemas.py           — Pydantic schemas
   routers/
     contacts.py        — CRUD + search
@@ -138,8 +159,10 @@ backend/app/
     import_contacts.py — vCard + CSV import
     profile.py         — user profile CRUD
     log.py             — group interaction/event logging
+    todos.py           — todo CRUD
+    sms.py             — inbound SMS webhook (reply-to-complete, STOP handling)
   jobs/
-    reminder_check.py  — hourly digest job (timezone-aware, opt-out filtered)
+    reminder_check.py  — hourly digest job (timezone-aware, opt-out filtered, todos included)
 
 frontend/src/
   App.tsx              — routes + nav
@@ -149,7 +172,7 @@ frontend/src/
     ContactDetail.tsx  — profile, interactions, life events
     ContactForm.tsx    — create/edit contact (incl. sms_opt_out)
     ContactImport.tsx  — vCard/CSV import flow
-    Settings.tsx       — SMS toggle, phone, delivery hour, timezone
+    Settings.tsx       — SMS toggle, phone, delivery hour, timezone, consent disclosure
     Profile.tsx        — user's own shareable profile
   api/                 — typed fetch wrappers per domain
 ```
