@@ -53,24 +53,31 @@ export default function Terms() {
       <h2 style={s.h2}>9. Account Termination</h2>
       <p style={s.p}>Michael Perry may suspend or terminate your account if you violate these Terms, if your account has been inactive for 12 or more consecutive months, or at Michael Perry's discretion with 30 days advance notice. You may delete your account at any time through the Settings page. Upon termination, your data is retained for 30 days and then permanently deleted.</p>
 
-      <h2 style={s.h2}>10. Disclaimers</h2>
+      <h2 style={s.h2}>10. SMS Program Terms</h2>
+      <p style={s.p}><strong>Program name:</strong> Keep Contact SMS Reminders. <strong>Description:</strong> Periodic daily digest messages summarizing overdue contact check-ins and upcoming events.</p>
+      <p style={s.p}><strong>Message frequency:</strong> Varies; typically one message per day when SMS reminders are enabled.</p>
+      <p style={s.p}><strong>Msg &amp; Data rates may apply.</strong></p>
+      <p style={s.p}>To cancel, reply <strong>STOP</strong> to any message. You will receive a confirmation and no further messages. To re-enable, turn SMS reminders back on in Settings.</p>
+      <p style={s.p}>For help, reply <strong>HELP</strong> or contact <a href="mailto:keepcontactnotifications@gmail.com">keepcontactnotifications@gmail.com</a>.</p>
+
+      <h2 style={s.h2}>11. Disclaimers</h2>
       <p style={{ ...s.p, ...s.caps }}>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. MICHAEL PERRY DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE.</p>
 
-      <h2 style={s.h2}>11. Limitation of Liability</h2>
+      <h2 style={s.h2}>12. Limitation of Liability</h2>
       <p style={{ ...s.p, ...s.caps }}>TO THE MAXIMUM EXTENT PERMITTED BY LAW, MICHAEL PERRY SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF DATA, ARISING OUT OF OR RELATED TO YOUR USE OF THE SERVICE. MICHAEL PERRY'S TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID FOR THE SERVICE IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
 
-      <h2 style={s.h2}>12. Dispute Resolution</h2>
+      <h2 style={s.h2}>13. Dispute Resolution</h2>
       <p style={s.p}>Any dispute arising out of or relating to these Terms or the Service shall be resolved by binding individual arbitration under the rules of the American Arbitration Association (AAA), rather than in court. <strong>You and Michael Perry each waive the right to a jury trial and the right to participate in any class action.</strong></p>
       <p style={s.p}>You may opt out of this arbitration agreement by emailing <a href="mailto:keepcontactnotifications@gmail.com">keepcontactnotifications@gmail.com</a> within 30 days of first accepting these Terms. Your message must include your name, email address, and a clear statement that you wish to opt out of arbitration.</p>
       <p style={s.p}>This arbitration clause does not apply to claims for injunctive or equitable relief.</p>
 
-      <h2 style={s.h2}>13. Governing Law</h2>
+      <h2 style={s.h2}>14. Governing Law</h2>
       <p style={s.p}>These Terms are governed by the laws of the State of Connecticut, without regard to its conflict of law provisions.</p>
 
-      <h2 style={s.h2}>14. Changes to These Terms</h2>
+      <h2 style={s.h2}>15. Changes to These Terms</h2>
       <p style={s.p}>Michael Perry may update these Terms from time to time. Material changes will be communicated by email or in-app notice at least 30 days before taking effect. Continued use of the Service after the effective date constitutes acceptance of the updated Terms.</p>
 
-      <h2 style={s.h2}>15. Contact</h2>
+      <h2 style={s.h2}>16. Contact</h2>
       <p style={s.p}>Questions about these Terms: <a href="mailto:keepcontactnotifications@gmail.com">keepcontactnotifications@gmail.com</a></p>
     </div>
   )

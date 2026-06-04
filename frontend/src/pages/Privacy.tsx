@@ -97,8 +97,8 @@ export default function Privacy() {
       <p style={s.p}>Keep Contact operates an SMS reminder program. By enabling SMS reminders in Settings and saving your mobile number, you consent to receive periodic text message digests summarizing overdue check-ins and upcoming events for your contacts.</p>
       <ul style={s.ul}>
         <li><strong>Message frequency:</strong> Varies; typically one message per day when reminders are enabled.</li>
-        <li><strong>To opt out:</strong> Reply STOP to any message, or disable SMS reminders in Settings. You will receive a confirmation and no further messages.</li>
-        <li><strong>For help:</strong> Reply HELP for information.</li>
+        <li>To opt out, reply <strong>STOP</strong> to any message or disable SMS reminders in Settings. You will receive a confirmation and no further messages.</li>
+        <li>For help, reply <strong>HELP</strong>.</li>
         <li><strong>Msg &amp; Data rates may apply.</strong></li>
       </ul>
       <p style={s.p}>Your mobile number is used solely to deliver reminder messages and is never sold or shared with third parties.</p>
