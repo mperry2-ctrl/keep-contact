@@ -26,6 +26,7 @@ export default function Todos() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   const load = () => todosApi.list().then(setTodos).finally(() => setLoading(false))
 
@@ -54,13 +55,21 @@ export default function Todos() {
   }
 
   const handleEdit = (todo: Todo) => {
+    setConfirmingId(null)
     setEditingId(todo.id)
     setForm({ description: todo.description, category: todo.category, due_date: todo.due_date })
     setShowForm(true)
   }
 
-  const handleComplete = async (id: string) => {
+  const handleConfirmComplete = async (id: string) => {
     await todosApi.complete(id)
+    setConfirmingId(null)
+    setShowCompleted(true)
+    await load()
+  }
+
+  const handleUncomplete = async (id: string) => {
+    await todosApi.uncomplete(id)
     await load()
   }
 
@@ -125,13 +134,22 @@ export default function Todos() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {incomplete.map(todo => (
-          <TodoRow
-            key={todo.id}
-            todo={todo}
-            onComplete={handleComplete}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          confirmingId === todo.id ? (
+            <ConfirmRow
+              key={todo.id}
+              todo={todo}
+              onConfirm={() => handleConfirmComplete(todo.id)}
+              onCancel={() => setConfirmingId(null)}
+            />
+          ) : (
+            <TodoRow
+              key={todo.id}
+              todo={todo}
+              onCheckbox={() => setConfirmingId(todo.id)}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          )
         ))}
       </div>
 
@@ -144,13 +162,32 @@ export default function Todos() {
             {showCompleted ? '▾' : '▸'} Completed ({completed.length})
           </button>
           {showCompleted && (
-            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', opacity: 0.6 }}>
+            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {completed.map(todo => (
-                <div key={todo.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', fontSize: '0.875rem', textDecoration: 'line-through', color: '#555' }}>
-                  <span>✓</span>
-                  <span>{CATEGORY_EMOJI[todo.category]} {todo.description}</span>
-                  {todo.due_date && <span style={{ color: '#999' }}>· {todo.due_date}</span>}
-                  <button onClick={() => handleDelete(todo.id)} style={{ marginLeft: 'auto', color: '#aaa', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+                <div key={todo.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', padding: '0.5rem 0.75rem', borderRadius: 6, border: '1px solid #eee', background: '#fafafa' }}>
+                  <input
+                    type="checkbox"
+                    checked={true}
+                    onChange={() => handleUncomplete(todo.id)}
+                    style={{ flexShrink: 0, cursor: 'pointer' }}
+                    title="Undo completion"
+                  />
+                  <span style={{ flex: 1, textDecoration: 'line-through', color: '#888', fontSize: '0.875rem' }}>
+                    {CATEGORY_EMOJI[todo.category]} {todo.description}
+                  </span>
+                  {todo.due_date && <span style={{ color: '#bbb', fontSize: '0.8rem' }}>· {todo.due_date}</span>}
+                  <button
+                    onClick={() => handleUncomplete(todo.id)}
+                    style={{ color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                  >
+                    Undo
+                  </button>
+                  <button
+                    onClick={() => handleDelete(todo.id)}
+                    style={{ color: '#aaa', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}
+                  >
+                    Delete
+                  </button>
                 </div>
               ))}
             </div>
@@ -163,18 +200,18 @@ export default function Todos() {
 
 interface TodoRowProps {
   todo: Todo
-  onComplete: (id: string) => void
+  onCheckbox: () => void
   onEdit: (todo: Todo) => void
   onDelete: (id: string) => void
 }
 
-function TodoRow({ todo, onComplete, onEdit, onDelete }: TodoRowProps) {
+function TodoRow({ todo, onCheckbox, onEdit, onDelete }: TodoRowProps) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.75rem', borderRadius: 6, border: '1px solid #eee', background: '#fff' }}>
       <input
         type="checkbox"
         checked={false}
-        onChange={() => onComplete(todo.id)}
+        onChange={onCheckbox}
         style={{ flexShrink: 0, cursor: 'pointer' }}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -185,6 +222,25 @@ function TodoRow({ todo, onComplete, onEdit, onDelete }: TodoRowProps) {
       </div>
       <button onClick={() => onEdit(todo)} style={{ color: '#555', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>
       <button onClick={() => onDelete(todo.id)} style={{ color: '#aaa', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+    </div>
+  )
+}
+
+interface ConfirmRowProps {
+  todo: Todo
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+function ConfirmRow({ todo, onConfirm, onCancel }: ConfirmRowProps) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.75rem', borderRadius: 6, border: '1px solid #d1d5db', background: '#f9fafb' }}>
+      <input type="checkbox" checked={false} readOnly style={{ flexShrink: 0, opacity: 0.4 }} />
+      <span style={{ flex: 1, color: '#555', fontSize: '0.9rem' }}>
+        Mark <strong>{CATEGORY_EMOJI[todo.category]} {todo.description}</strong> as done?
+      </span>
+      <button onClick={onConfirm} style={{ fontWeight: 600, fontSize: '0.8rem' }}>✓ Yes</button>
+      <button onClick={onCancel} style={{ color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>✕ No</button>
     </div>
   )
 }

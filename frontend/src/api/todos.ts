@@ -34,5 +34,6 @@ export const todosApi = {
   create: (body: TodoPayload) => api.post<Todo>('/todos/', body),
   update: (id: string, body: Partial<TodoPayload>) => api.put<Todo>(`/todos/${id}`, body),
   complete: (id: string) => api.post<Todo>(`/todos/${id}/complete`, {}),
+  uncomplete: (id: string) => api.post<Todo>(`/todos/${id}/uncomplete`, {}),
   del: (id: string) => api.del(`/todos/${id}`),
 }

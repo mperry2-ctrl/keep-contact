@@ -80,6 +80,21 @@ async def complete_todo(
     return todo
 
 
+@router.post("/{todo_id}/uncomplete", response_model=TodoResponse)
+async def uncomplete_todo(
+    todo_id: uuid.UUID,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    todo = await db.get(Todo, todo_id)
+    if not todo or todo.user_id != uuid.UUID(user["id"]):
+        raise HTTPException(404)
+    todo.completed_at = None
+    await db.commit()
+    await db.refresh(todo)
+    return todo
+
+
 @router.delete("/{todo_id}", status_code=204)
 async def delete_todo(
     todo_id: uuid.UUID,

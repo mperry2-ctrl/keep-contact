@@ -217,14 +217,16 @@ export default function Dashboard() {
   const [todos, setTodos] = useState<Todo[]>([])
   const [loading, setLoading] = useState(true)
   const [showLogModal, setShowLogModal] = useState(false)
+  const [confirmingTodoId, setConfirmingTodoId] = useState<string | null>(null)
 
   function loadData() {
     return Promise.all([dashboardApi.overdue(), dashboardApi.upcoming(), todosApi.list()])
       .then(([o, u, t]) => { setOverdue(o); setUpcoming(u); setTodos(t.filter(t => !t.completed_at)) })
   }
 
-  const handleCompleteTodo = async (id: string) => {
+  const handleConfirmComplete = async (id: string) => {
     await todosApi.complete(id)
+    setConfirmingTodoId(null)
     setTodos(prev => prev.filter(t => t.id !== id))
   }
 
@@ -321,20 +323,33 @@ export default function Dashboard() {
           : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {todos.map(todo => (
-                <li key={todo.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0', borderBottom: '1px solid #e5e7eb' }}>
-                  <input
-                    type="checkbox"
-                    checked={false}
-                    onChange={() => handleCompleteTodo(todo.id)}
-                    style={{ flexShrink: 0, cursor: 'pointer' }}
-                  />
-                  <span style={{ flex: 1 }}>
-                    {CATEGORY_EMOJI[todo.category]} {todo.description}
-                  </span>
-                  {todo.due_date && (
-                    <span style={{ fontSize: '0.8rem', color: '#888' }}>Due {todo.due_date}</span>
+                <li key={todo.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  {confirmingTodoId === todo.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0', background: '#f9fafb' }}>
+                      <input type="checkbox" checked={false} readOnly style={{ flexShrink: 0, opacity: 0.4 }} />
+                      <span style={{ flex: 1, fontSize: '0.9rem', color: '#555' }}>
+                        Mark <strong>{todo.description}</strong> as done?
+                      </span>
+                      <button onClick={() => handleConfirmComplete(todo.id)} style={{ fontWeight: 600, fontSize: '0.8rem' }}>✓ Yes</button>
+                      <button onClick={() => setConfirmingTodoId(null)} style={{ color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>✕ No</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0' }}>
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onChange={() => setConfirmingTodoId(todo.id)}
+                        style={{ flexShrink: 0, cursor: 'pointer' }}
+                      />
+                      <span style={{ flex: 1 }}>
+                        {CATEGORY_EMOJI[todo.category]} {todo.description}
+                      </span>
+                      {todo.due_date && (
+                        <span style={{ fontSize: '0.8rem', color: '#888' }}>Due {todo.due_date}</span>
+                      )}
+                      <Link to="/todos" style={{ fontSize: '0.8rem', color: '#888' }}>Edit</Link>
+                    </div>
                   )}
-                  <Link to="/todos" style={{ fontSize: '0.8rem', color: '#888' }}>Edit</Link>
                 </li>
               ))}
             </ul>
