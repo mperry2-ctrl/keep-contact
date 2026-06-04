@@ -4,7 +4,8 @@ import { todosApi, type Todo, type TodoCategory, type TodoPayload, CATEGORY_LABE
 const CATEGORIES: TodoCategory[] = ['priority', 'need_to_do', 'wishlist']
 
 function timeAgo(createdAt: string): string {
-  const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
+  const utc = createdAt.match(/[Z+]/) ? createdAt : createdAt + 'Z'
+  const days = Math.floor((Date.now() - new Date(utc).getTime()) / 86400000)
   if (days === 0) return 'today'
   if (days === 1) return '1 day ago'
   if (days < 7) return `${days} days ago`
