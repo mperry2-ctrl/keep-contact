@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from .config import settings
 from .auth import get_current_user
-from .routers import contacts, interactions, life_events, dashboard, settings as settings_router, import_contacts, profile, log, todos, sms
+from .routers import contacts, interactions, life_events, dashboard, settings as settings_router, import_contacts, profile, log, todos, sms, sync
 from .jobs.reminder_check import run_reminder_check
 
 scheduler = AsyncIOScheduler()
@@ -40,6 +40,7 @@ app.include_router(profile.router)
 app.include_router(log.router)
 app.include_router(todos.router)
 app.include_router(sms.router)
+app.include_router(sync.router)
 
 
 
