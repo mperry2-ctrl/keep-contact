@@ -1,11 +1,8 @@
-import logging
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from ..auth import get_current_user
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sync", tags=["sync"])
 
@@ -85,9 +82,10 @@ async def receive_raw_messages(
         conversations=list(messages_per_conversation.keys()),
         messages_per_conversation=messages_per_conversation,
     )
-    logger.info(
-        "sync/shortcuts/messages user=%s total_sent=%d received=%d skipped=%d truncated=%s conversations=%s",
-        user["id"], total_sent, response.received, response.skipped_no_body,
-        response.truncated, response.messages_per_conversation,
+    print(
+        f"[sync] user={user['id']} total_sent={total_sent} received={response.received} "
+        f"skipped={response.skipped_no_body} truncated={response.truncated} "
+        f"conversations={response.messages_per_conversation}",
+        flush=True,
     )
     return response
